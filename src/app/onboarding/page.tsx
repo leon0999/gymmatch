@@ -13,7 +13,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { POPULAR_GYMS, FITNESS_LEVELS, FITNESS_GOALS, WORKOUT_STYLES } from '@/lib/constants';
+import { supabase } from '@/lib/supabase';
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -45,7 +47,10 @@ interface OnboardingData {
 }
 
 export default function OnboardingPage() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<OnboardingData>({
     name: '',
     age: null,
@@ -79,10 +84,92 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleComplete = () => {
-    console.log('Onboarding completed:', formData);
-    // TODO: Save to Supabase and redirect to /discover
-    alert('Onboarding complete! (Coming soon: Save to database)');
+  const handleComplete = async () => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+
+      // Validate required fields
+      if (!formData.name || !formData.age || !formData.gender || !formData.location || !formData.fitnessLevel) {
+        setError('Please fill in all required fields');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Step 1: Create anonymous user session
+      const { data: { user }, error: authError } = await supabase.auth.signInAnonymously();
+
+      if (authError || !user) {
+        throw new Error('Failed to create user session');
+      }
+
+      // Step 2: Geocode location (MVP: Use dummy coordinates for common cities)
+      const cityCoordinates: Record<string, { lat: number; lng: number }> = {
+        'manhattan': { lat: 40.7831, lng: -73.9712 },
+        'brooklyn': { lat: 40.6782, lng: -73.9442 },
+        'los angeles': { lat: 34.0522, lng: -118.2437 },
+        'san francisco': { lat: 37.7749, lng: -122.4194 },
+        'chicago': { lat: 41.8781, lng: -87.6298 },
+        'miami': { lat: 25.7617, lng: -80.1918 },
+        'austin': { lat: 30.2672, lng: -97.7431 },
+        'seattle': { lat: 47.6062, lng: -122.3321 },
+        'boston': { lat: 42.3601, lng: -71.0589 },
+        'denver': { lat: 39.7392, lng: -104.9903 },
+      };
+
+      const locationKey = formData.location.toLowerCase().trim();
+      const coords = cityCoordinates[locationKey] || { lat: 40.7831, lng: -73.9712 }; // Default to NYC
+
+      // Step 3: Convert schedule data
+      const scheduleData = formData.workoutDays.map((day) => {
+        const timeMap: Record<string, string> = {
+          'morning': '06:00-09:00',
+          'midday': '11:00-14:00',
+          'evening': '17:00-20:00',
+          'night': '20:00-23:00',
+        };
+        return {
+          day,
+          startTime: timeMap[formData.preferredTime]?.split('-')[0] || '09:00',
+          endTime: timeMap[formData.preferredTime]?.split('-')[1] || '10:00',
+        };
+      });
+
+      // Step 4: Create profile in Supabase
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: user.id,
+          name: formData.name,
+          age: formData.age,
+          gender: formData.gender,
+          bio: formData.bio || `Looking for a gym partner to work out ${formData.workoutDays.length}x/week!`,
+          location: `POINT(${coords.lng} ${coords.lat})`, // PostGIS format
+          gym: formData.gym || null,
+          fitness_level: formData.fitnessLevel,
+          fitness_goals: formData.goals,
+          workout_styles: formData.workoutStyles,
+          schedule: scheduleData,
+          partner_gender_preference: formData.partnerGender || 'any',
+          age_range_min: formData.ageRangeMin,
+          age_range_max: formData.ageRangeMax,
+          max_distance: formData.maxDistance,
+          is_premium: false,
+          photos: [],
+        });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        throw new Error('Failed to create profile');
+      }
+
+      // Step 5: Redirect to discover page
+      router.push('/discover');
+    } catch (err: any) {
+      console.error('Onboarding error:', err);
+      setError(err.message || 'Something went wrong. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   const updateField = (field: keyof OnboardingData, value: any) => {
@@ -126,6 +213,13 @@ export default function OnboardingPage() {
             />
           </div>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-800 font-medium">{error}</p>
+          </div>
+        )}
 
         {/* Step Content */}
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
@@ -518,9 +612,14 @@ export default function OnboardingPage() {
           ) : (
             <button
               onClick={handleComplete}
-              className="px-8 py-3 bg-teal-600 text-white font-semibold rounded-full hover:bg-teal-700 transition-colors shadow-lg"
+              disabled={isSubmitting}
+              className={`px-8 py-3 text-white font-semibold rounded-full transition-colors shadow-lg ${
+                isSubmitting
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-teal-600 hover:bg-teal-700'
+              }`}
             >
-              Complete Profile
+              {isSubmitting ? 'Creating Profile...' : 'Complete Profile'}
             </button>
           )}
         </div>
