@@ -1,0 +1,530 @@
+'use client';
+
+/**
+ * GymMatch - Onboarding Flow
+ *
+ * 5-Step user onboarding process:
+ * 1. Basic Info (name, age, gender, location)
+ * 2. Fitness Profile (level, goals, styles)
+ * 3. Schedule (weekly workout times)
+ * 4. Photos & Bio
+ * 5. Preferences (partner preferences)
+ */
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { POPULAR_GYMS, FITNESS_LEVELS, FITNESS_GOALS, WORKOUT_STYLES } from '@/lib/constants';
+
+type Step = 1 | 2 | 3 | 4 | 5;
+
+interface OnboardingData {
+  // Step 1: Basic Info
+  name: string;
+  age: number | null;
+  gender: 'male' | 'female' | 'other' | '';
+  location: string;
+  gym: string;
+
+  // Step 2: Fitness Profile
+  fitnessLevel: 'beginner' | 'intermediate' | 'advanced' | '';
+  goals: string[];
+  workoutStyles: string[];
+
+  // Step 3: Schedule (simplified for MVP)
+  workoutDays: string[];
+  preferredTime: string;
+
+  // Step 4: Photos & Bio
+  bio: string;
+
+  // Step 5: Preferences
+  partnerGender: 'same' | 'any' | 'opposite' | '';
+  ageRangeMin: number;
+  ageRangeMax: number;
+  maxDistance: number;
+}
+
+export default function OnboardingPage() {
+  const [currentStep, setCurrentStep] = useState<Step>(1);
+  const [formData, setFormData] = useState<OnboardingData>({
+    name: '',
+    age: null,
+    gender: '',
+    location: '',
+    gym: '',
+    fitnessLevel: '',
+    goals: [],
+    workoutStyles: [],
+    workoutDays: [],
+    preferredTime: '',
+    bio: '',
+    partnerGender: '',
+    ageRangeMin: 22,
+    ageRangeMax: 35,
+    maxDistance: 5,
+  });
+
+  const totalSteps = 5;
+  const progress = (currentStep / totalSteps) * 100;
+
+  const handleNext = () => {
+    if (currentStep < 5) {
+      setCurrentStep((currentStep + 1) as Step);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep((currentStep - 1) as Step);
+    }
+  };
+
+  const handleComplete = () => {
+    console.log('Onboarding completed:', formData);
+    // TODO: Save to Supabase and redirect to /discover
+    alert('Onboarding complete! (Coming soon: Save to database)');
+  };
+
+  const updateField = (field: keyof OnboardingData, value: any) => {
+    setFormData({ ...formData, [field]: value });
+  };
+
+  const toggleArrayItem = (field: 'goals' | 'workoutStyles' | 'workoutDays', item: string) => {
+    const currentArray = formData[field];
+    if (currentArray.includes(item)) {
+      updateField(
+        field,
+        currentArray.filter((i) => i !== item)
+      );
+    } else {
+      updateField(field, [...currentArray, item]);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        {/* Header */}
+        <div className="mb-8">
+          <Link href="/" className="text-teal-600 hover:text-teal-700 font-medium">
+            ← Back to Home
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900 mt-4">
+            Create Your Profile
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Step {currentStep} of {totalSteps}
+          </p>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-teal-600 transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Step Content */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+          {/* Step 1: Basic Info */}
+          {currentStep === 1 && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Let's start with the basics
+              </h2>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => updateField('name', e.target.value)}
+                    placeholder="Your name"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Age
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.age || ''}
+                    onChange={(e) => updateField('age', parseInt(e.target.value))}
+                    placeholder="25"
+                    min="18"
+                    max="99"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Gender
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {['male', 'female', 'other'].map((gender) => (
+                      <button
+                        key={gender}
+                        onClick={() => updateField('gender', gender)}
+                        className={`px-4 py-3 rounded-lg border-2 font-medium transition-colors ${
+                          formData.gender === gender
+                            ? 'border-teal-600 bg-teal-50 text-teal-700'
+                            : 'border-gray-300 bg-white text-gray-700 hover:border-teal-300'
+                        }`}
+                      >
+                        {gender.charAt(0).toUpperCase() + gender.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Location (City)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => updateField('location', e.target.value)}
+                    placeholder="Manhattan, NYC"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-400"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    We'll use this to find gym partners near you
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Gym (Optional)
+                  </label>
+                  <select
+                    value={formData.gym}
+                    onChange={(e) => updateField('gym', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900"
+                  >
+                    <option value="">Select your gym</option>
+                    {POPULAR_GYMS.map((gym) => (
+                      <option key={gym} value={gym}>
+                        {gym}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Fitness Profile */}
+          {currentStep === 2 && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Tell us about your fitness journey
+              </h2>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Fitness Level
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {Object.entries(FITNESS_LEVELS).map(([key, level]) => (
+                      <button
+                        key={key}
+                        onClick={() => updateField('fitnessLevel', key)}
+                        className={`px-4 py-4 rounded-lg border-2 transition-colors text-left ${
+                          formData.fitnessLevel === key
+                            ? 'border-teal-600 bg-teal-50'
+                            : 'border-gray-300 bg-white hover:border-teal-300'
+                        }`}
+                      >
+                        <div className={`font-bold text-lg mb-1 ${
+                          formData.fitnessLevel === key ? 'text-teal-700' : 'text-gray-900'
+                        }`}>
+                          {level.label}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {level.description}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Fitness Goals (Select all that apply)
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(FITNESS_GOALS).map(([key, goal]) => (
+                      <button
+                        key={key}
+                        onClick={() => toggleArrayItem('goals', key)}
+                        className={`px-4 py-3 rounded-lg border-2 transition-colors text-left ${
+                          formData.goals.includes(key)
+                            ? 'border-teal-600 bg-teal-50'
+                            : 'border-gray-300 bg-white hover:border-teal-300'
+                        }`}
+                      >
+                        <span className={`font-semibold ${
+                          formData.goals.includes(key) ? 'text-teal-700' : 'text-gray-900'
+                        }`}>
+                          {goal.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Workout Styles (Select all that apply)
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(WORKOUT_STYLES).map(([key, style]) => (
+                      <button
+                        key={key}
+                        onClick={() => toggleArrayItem('workoutStyles', key)}
+                        className={`px-4 py-3 rounded-lg border-2 transition-colors text-left ${
+                          formData.workoutStyles.includes(key)
+                            ? 'border-teal-600 bg-teal-50'
+                            : 'border-gray-300 bg-white hover:border-teal-300'
+                        }`}
+                      >
+                        <div className={`font-semibold mb-1 ${
+                          formData.workoutStyles.includes(key) ? 'text-teal-700' : 'text-gray-900'
+                        }`}>
+                          {style.label}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {style.description}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Schedule (Simplified) */}
+          {currentStep === 3 && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                When do you usually work out?
+              </h2>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Workout Days
+                  </label>
+                  <div className="grid grid-cols-4 gap-3">
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(
+                      (day) => (
+                        <button
+                          key={day}
+                          onClick={() => toggleArrayItem('workoutDays', day)}
+                          className={`px-4 py-3 rounded-lg border-2 font-medium transition-colors ${
+                            formData.workoutDays.includes(day)
+                              ? 'border-teal-600 bg-teal-50 text-teal-700'
+                              : 'border-gray-300 bg-white text-gray-700 hover:border-teal-300'
+                          }`}
+                        >
+                          {day.slice(0, 3)}
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Preferred Time
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: 'Early Morning (6-9 AM)', value: 'morning' },
+                      { label: 'Midday (11 AM - 2 PM)', value: 'midday' },
+                      { label: 'Evening (5-8 PM)', value: 'evening' },
+                      { label: 'Night (8-11 PM)', value: 'night' },
+                    ].map((time) => (
+                      <button
+                        key={time.value}
+                        onClick={() => updateField('preferredTime', time.value)}
+                        className={`px-4 py-3 rounded-lg border-2 font-medium transition-colors ${
+                          formData.preferredTime === time.value
+                            ? 'border-teal-600 bg-teal-50 text-teal-700'
+                            : 'border-gray-300 bg-white text-gray-700 hover:border-teal-300'
+                        }`}
+                      >
+                        {time.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Bio */}
+          {currentStep === 4 && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Tell potential partners about yourself
+              </h2>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Bio (20-300 characters)
+                  </label>
+                  <textarea
+                    value={formData.bio}
+                    onChange={(e) => updateField('bio', e.target.value)}
+                    placeholder="Looking for a consistent workout partner to hit the gym 3-4x/week. Love powerlifting and trying new protein shakes!"
+                    rows={6}
+                    maxLength={300}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent resize-none text-gray-900 placeholder:text-gray-400"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    {formData.bio.length}/300 characters
+                  </p>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Photo Upload Coming Soon!</strong> For now, we'll use a default
+                    avatar. You'll be able to add photos in the next update.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Preferences */}
+          {currentStep === 5 && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Who are you looking to match with?
+              </h2>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Partner Gender Preference
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { value: 'same', label: 'Same as me' },
+                      { value: 'opposite', label: 'Opposite' },
+                      { value: 'any', label: 'Any gender' },
+                    ].map((pref) => (
+                      <button
+                        key={pref.value}
+                        onClick={() => updateField('partnerGender', pref.value)}
+                        className={`px-4 py-3 rounded-lg border-2 font-medium transition-colors ${
+                          formData.partnerGender === pref.value
+                            ? 'border-teal-600 bg-teal-50 text-teal-700'
+                            : 'border-gray-300 bg-white text-gray-700 hover:border-teal-300'
+                        }`}
+                      >
+                        {pref.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Age Range: {formData.ageRangeMin} - {formData.ageRangeMax} years
+                  </label>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-xs text-gray-500 mb-2">Minimum age: {formData.ageRangeMin}</div>
+                      <input
+                        type="range"
+                        min="18"
+                        max="65"
+                        value={formData.ageRangeMin}
+                        onChange={(e) => updateField('ageRangeMin', parseInt(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-600 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-teal-600 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-2">Maximum age: {formData.ageRangeMax}</div>
+                      <input
+                        type="range"
+                        min="18"
+                        max="65"
+                        value={formData.ageRangeMax}
+                        onChange={(e) => updateField('ageRangeMax', parseInt(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-600 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-teal-600 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Maximum Distance: {formData.maxDistance} miles
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="25"
+                    value={formData.maxDistance}
+                    onChange={(e) => updateField('maxDistance', parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-600 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-teal-600 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-2">
+                    <span>1 mile</span>
+                    <span>25 miles</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="flex justify-between">
+          {currentStep > 1 ? (
+            <button
+              onClick={handleBack}
+              className="px-6 py-3 bg-white text-teal-600 font-semibold rounded-full border-2 border-teal-600 hover:bg-teal-50 transition-colors"
+            >
+              Back
+            </button>
+          ) : (
+            <div />
+          )}
+
+          {currentStep < 5 ? (
+            <button
+              onClick={handleNext}
+              className="px-8 py-3 bg-teal-600 text-white font-semibold rounded-full hover:bg-teal-700 transition-colors shadow-lg"
+            >
+              Continue
+            </button>
+          ) : (
+            <button
+              onClick={handleComplete}
+              className="px-8 py-3 bg-teal-600 text-white font-semibold rounded-full hover:bg-teal-700 transition-colors shadow-lg"
+            >
+              Complete Profile
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
