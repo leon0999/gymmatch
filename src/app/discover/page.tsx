@@ -1,94 +1,475 @@
-/**
- * GymMatch - Discover Page
- *
- * Main swipe/match interface
- * Shows potential gym partners with match scores
- */
-
 'use client';
 
-import Link from 'next/link';
+/**
+ * GymMatch - Discover Page (MVP Version)
+ *
+ * Simple matching interface with:
+ * - List of potential matches
+ * - Match scores
+ * - Like/Pass buttons
+ */
 
-export default function DiscoverPage() {
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import type { Database } from '@/lib/database.types';
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
+
+interface MatchWithScore extends Profile {
+  matchScore: number;
+  distance: number;
+  matchReasons: string[];
+}
+
+export default function DiscoverPageV2() {
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<Profile | null>(null);
+  const [matches, setMatches] = useState<MatchWithScore[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadMatches();
+  }, []);
+
+  const loadMatches = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push('/onboarding');
+        return;
+      }
+
+      // Get current user's profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError || !profile) {
+        setError('Could not load your profile');
+        return;
+      }
+
+      setCurrentUser(profile);
+
+      // Get users already swiped
+      const { data: swipedUsers } = await supabase
+        .from('swipes')
+        .select('target_user_id')
+        .eq('user_id', user.id);
+
+      const swipedUserIds = new Set(
+        (swipedUsers || []).map((s) => s.target_user_id)
+      );
+
+      // Get all other profiles (excluding self and already swiped)
+      const { data: allProfiles, error: matchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .neq('user_id', user.id)
+        .limit(50);
+
+      if (matchError) {
+        setError('Could not load matches');
+        return;
+      }
+
+      // Filter out already swiped users
+      const unseenProfiles = (allProfiles || []).filter(
+        (p) => !swipedUserIds.has(p.user_id)
+      );
+
+      // Calculate match scores (simplified for MVP)
+      const scored = unseenProfiles.map((match) => ({
+        ...match,
+        matchScore: calculateSimpleScore(profile, match),
+        distance: calculateSimpleDistance(profile, match),
+        matchReasons: getMatchReasons(profile, match),
+      }));
+
+      // Sort by score
+      scored.sort((a, b) => b.matchScore - a.matchScore);
+
+      setMatches(scored);
+    } catch (err: any) {
+      console.error('Error loading matches:', err);
+      setError(err.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateSimpleScore = (user: Profile, match: Profile): number => {
+    let score = 50; // Base score
+
+    // Same city: +30
+    if (user.location_name?.toLowerCase() === match.location_name?.toLowerCase()) {
+      score += 30;
+    }
+
+    // Fitness level match: +10
+    if (user.fitness_level === match.fitness_level) {
+      score += 10;
+    }
+
+    // Goals overlap: +10
+    const commonGoals = user.fitness_goals?.filter((g) =>
+      match.fitness_goals?.includes(g)
+    ) || [];
+    score += Math.min(10, commonGoals.length * 5);
+
+    // Workout styles overlap: +10
+    const commonStyles = user.workout_styles?.filter((s) =>
+      match.workout_styles?.includes(s)
+    ) || [];
+    score += Math.min(10, commonStyles.length * 5);
+
+    // Same gym: +20
+    if (user.gym && match.gym && user.gym === match.gym) {
+      score += 20;
+    }
+
+    return Math.min(100, Math.round(score));
+  };
+
+  const calculateSimpleDistance = (user: Profile, match: Profile): number => {
+    // MVP: Same city = 1 mile, different = 5 miles
+    if (user.location_name?.toLowerCase() === match.location_name?.toLowerCase()) {
+      return 1;
+    }
+    return 5;
+  };
+
+  const getMatchReasons = (user: Profile, match: Profile): string[] => {
+    const reasons: string[] = [];
+
+    if (user.location_name?.toLowerCase() === match.location_name?.toLowerCase()) {
+      reasons.push(`📍 Both in ${match.location_name}`);
+    }
+
+    if (user.fitness_level === match.fitness_level) {
+      reasons.push(`💪 Both ${match.fitness_level}`);
+    }
+
+    const commonGoals = user.fitness_goals?.filter((g) =>
+      match.fitness_goals?.includes(g)
+    ) || [];
+    if (commonGoals.length > 0) {
+      reasons.push(`🎯 ${commonGoals[0]}`);
+    }
+
+    if (user.gym && match.gym && user.gym === match.gym) {
+      reasons.push(`🏢 ${match.gym}`);
+    }
+
+    return reasons.slice(0, 3);
+  };
+
+  const handleLike = async () => {
+    if (!currentUser || currentIndex >= matches.length) return;
+
+    const match = matches[currentIndex];
+
+    try {
+      // Record swipe in database
+      const { error } = await supabase.from('swipes').insert({
+        user_id: currentUser.user_id,
+        target_user_id: match.user_id,
+        action: 'like',
+      });
+
+      if (error) {
+        console.error('Error recording like:', error);
+      } else {
+        console.log('✅ Liked:', match.name);
+
+        // Check for mutual match
+        await checkMutualMatch(currentUser.user_id, match.user_id);
+      }
+    } catch (err) {
+      console.error('Error in handleLike:', err);
+    }
+
+    // Move to next
+    setCurrentIndex(currentIndex + 1);
+  };
+
+  const handlePass = async () => {
+    if (!currentUser || currentIndex >= matches.length) return;
+
+    const match = matches[currentIndex];
+
+    try {
+      // Record swipe in database
+      const { error } = await supabase.from('swipes').insert({
+        user_id: currentUser.user_id,
+        target_user_id: match.user_id,
+        action: 'pass',
+      });
+
+      if (error) {
+        console.error('Error recording pass:', error);
+      } else {
+        console.log('❌ Passed:', match.name);
+      }
+    } catch (err) {
+      console.error('Error in handlePass:', err);
+    }
+
+    // Move to next
+    setCurrentIndex(currentIndex + 1);
+  };
+
+  const checkMutualMatch = async (userId: string, targetUserId: string) => {
+    try {
+      // Check if target user also liked current user
+      const { data: mutualLike } = await supabase
+        .from('swipes')
+        .select('*')
+        .eq('user_id', targetUserId)
+        .eq('target_user_id', userId)
+        .eq('action', 'like')
+        .single();
+
+      if (mutualLike) {
+        // Create mutual match
+        const { error } = await supabase.from('matches').insert({
+          user1_id: userId,
+          user2_id: targetUserId,
+        });
+
+        if (!error) {
+          console.log('🎉 It\'s a match!');
+          // TODO: Show match modal/notification
+          alert(`🎉 It's a match! You and ${matches[currentIndex].name} can now chat!`);
+        }
+      }
+    } catch (err) {
+      console.error('Error checking mutual match:', err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading matches...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center p-4">
+        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 max-w-md">
+          <h2 className="text-xl font-bold text-red-800 mb-2">Error</h2>
+          <p className="text-red-700">{error}</p>
+          <button
+            onClick={loadMatches}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentIndex >= matches.length) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg
+              className="w-10 h-10 text-teal-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            You've seen everyone!
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Check back later for new gym partners.
+          </p>
+          <button
+            onClick={() => router.push('/')}
+            className="px-6 py-3 bg-teal-600 text-white font-semibold rounded-full hover:bg-teal-700"
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const currentMatch = matches[currentIndex];
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Discover Partners
-          </h1>
-          <Link
-            href="/"
-            className="text-teal-600 hover:text-teal-700 font-medium"
-          >
-            Home
-          </Link>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Discover</h1>
+          <div className="text-sm text-gray-500">
+            {currentIndex + 1} / {matches.length}
+          </div>
         </div>
 
-        {/* Success Message */}
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-            <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg
-                className="w-10 h-10 text-teal-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </div>
-
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Profile Created Successfully!
-            </h2>
-
-            <p className="text-lg text-gray-600 mb-8">
-              Your profile has been saved to the database. You're ready to start
-              matching with gym partners!
-            </p>
-
-            <div className="bg-teal-50 border border-teal-200 rounded-lg p-6 mb-8">
-              <h3 className="font-bold text-teal-900 mb-3">What's Next?</h3>
-              <ul className="text-left text-teal-800 space-y-2">
-                <li className="flex items-start">
-                  <span className="font-bold mr-2">1.</span>
-                  <span>We'll show you potential gym partners based on your preferences</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="font-bold mr-2">2.</span>
-                  <span>Swipe right on people you'd like to work out with</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="font-bold mr-2">3.</span>
-                  <span>When you both swipe right, it's a match!</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="font-bold mr-2">4.</span>
-                  <span>Message your matches and schedule workouts together</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-3">
-              <div className="text-sm text-gray-500 italic">
-                Coming soon: Swipe interface with match scores
+        {/* Match Card */}
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
+          {/* Profile Image Placeholder */}
+          <div className="h-96 bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-6xl">👤</span>
               </div>
-
-              <Link
-                href="/"
-                className="inline-block px-8 py-3 bg-teal-600 text-white font-semibold rounded-full hover:bg-teal-700 transition-colors shadow-lg"
-              >
-                Back to Home
-              </Link>
+              <p className="text-white text-sm opacity-75">Photo coming soon</p>
             </div>
           </div>
+
+          {/* Profile Info */}
+          <div className="p-6">
+            {/* Name and Match Score */}
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900">
+                  {currentMatch.name}, {currentMatch.age}
+                </h2>
+                <p className="text-gray-600 mt-1">
+                  {currentMatch.location_name}
+                  {currentMatch.distance && ` • ${currentMatch.distance} miles away`}
+                </p>
+              </div>
+              <div className="text-center">
+                <div className={`text-3xl font-bold ${
+                  currentMatch.matchScore >= 80 ? 'text-green-600' :
+                  currentMatch.matchScore >= 60 ? 'text-blue-600' :
+                  'text-yellow-600'
+                }`}>
+                  {currentMatch.matchScore}%
+                </div>
+                <div className="text-xs text-gray-500">Match</div>
+              </div>
+            </div>
+
+            {/* Bio */}
+            {currentMatch.bio && (
+              <p className="text-gray-700 mb-4">{currentMatch.bio}</p>
+            )}
+
+            {/* Match Reasons */}
+            {currentMatch.matchReasons.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {currentMatch.matchReasons.map((reason, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm"
+                  >
+                    {reason}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Details */}
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+              <div>
+                <div className="text-xs text-gray-500 mb-1">Fitness Level</div>
+                <div className="font-semibold capitalize">{currentMatch.fitness_level}</div>
+              </div>
+              {currentMatch.gym && (
+                <div>
+                  <div className="text-xs text-gray-500 mb-1">Gym</div>
+                  <div className="font-semibold">{currentMatch.gym}</div>
+                </div>
+              )}
+              {currentMatch.fitness_goals && currentMatch.fitness_goals.length > 0 && (
+                <div className="col-span-2">
+                  <div className="text-xs text-gray-500 mb-1">Goals</div>
+                  <div className="flex flex-wrap gap-2">
+                    {currentMatch.fitness_goals.map((goal, idx) => (
+                      <span key={idx} className="px-2 py-1 bg-gray-100 rounded text-sm capitalize">
+                        {goal.replace('_', ' ')}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {currentMatch.workout_styles && currentMatch.workout_styles.length > 0 && (
+                <div className="col-span-2">
+                  <div className="text-xs text-gray-500 mb-1">Workout Styles</div>
+                  <div className="flex flex-wrap gap-2">
+                    {currentMatch.workout_styles.map((style, idx) => (
+                      <span key={idx} className="px-2 py-1 bg-gray-100 rounded text-sm capitalize">
+                        {style}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-4 justify-center">
+          <button
+            onClick={handlePass}
+            className="w-20 h-20 bg-white border-4 border-gray-300 rounded-full flex items-center justify-center hover:border-red-400 hover:bg-red-50 transition-colors group"
+          >
+            <svg
+              className="w-10 h-10 text-gray-400 group-hover:text-red-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={3}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+
+          <button
+            onClick={handleLike}
+            className="w-20 h-20 bg-teal-600 rounded-full flex items-center justify-center hover:bg-teal-700 transition-colors shadow-lg"
+          >
+            <svg
+              className="w-10 h-10 text-white"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="text-center mt-6">
+          <p className="text-sm text-gray-500">
+            Swipe right to like, left to pass
+          </p>
         </div>
       </div>
     </div>

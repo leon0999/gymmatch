@@ -1,130 +1,12 @@
-'use client';
-
 /**
- * GymMatch - Landing Page (with Auth State)
+ * GymMatch - Landing Page
  *
- * 로그인 상태에 따라 다른 UI 표시
+ * Hero section with value proposition and call-to-action
  */
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 
 export default function Home() {
-  const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
-  const checkAuthStatus = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (user) {
-        // Get profile name
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('name')
-          .eq('user_id', user.id)
-          .single();
-
-        if (profile) {
-          setIsLoggedIn(true);
-          setUserName(profile.name);
-        }
-      }
-    } catch (err) {
-      console.error('Auth check error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  // Logged in view
-  if (isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
-        <div className="container mx-auto px-4 py-16">
-          <div className="flex flex-col items-center justify-center text-center max-w-4xl mx-auto">
-            {/* Welcome Message */}
-            <div className="mb-8">
-              <h1 className="text-5xl font-bold text-gray-900 mb-4">
-                Welcome back, {userName}! 👋
-              </h1>
-              <p className="text-xl text-gray-600">
-                Ready to find your perfect gym partner?
-              </p>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="grid md:grid-cols-3 gap-6 w-full max-w-3xl mb-12">
-              <Link
-                href="/discover"
-                className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow group"
-              >
-                <div className="text-5xl mb-4">❤️</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-600">
-                  Discover
-                </h3>
-                <p className="text-gray-600">
-                  Find new gym partners
-                </p>
-              </Link>
-
-              <Link
-                href="/matches"
-                className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow group"
-              >
-                <div className="text-5xl mb-4">💬</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-600">
-                  Matches
-                </h3>
-                <p className="text-gray-600">
-                  Chat with your matches
-                </p>
-              </Link>
-
-              <Link
-                href="/profile"
-                className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow group"
-              >
-                <div className="text-5xl mb-4">👤</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-600">
-                  Profile
-                </h3>
-                <p className="text-gray-600">
-                  View & edit profile
-                </p>
-              </Link>
-            </div>
-
-            {/* Primary CTA */}
-            <Link
-              href="/discover"
-              className="px-12 py-5 bg-teal-600 text-white text-xl font-bold rounded-full hover:bg-teal-700 transition-colors shadow-xl hover:shadow-2xl inline-block"
-            >
-              Start Swiping →
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Not logged in view (original landing page)
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
       {/* Hero Section */}
@@ -156,18 +38,17 @@ export default function Home() {
             >
               Get Started Free
             </Link>
-            <button
-              onClick={() => {
-                document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
-              }}
+            <Link
+              href="/discover"
               className="px-8 py-4 bg-white text-teal-600 text-lg font-semibold rounded-full border-2 border-teal-600 hover:bg-teal-50 transition-colors"
             >
               See How It Works
-            </button>
+            </Link>
           </div>
 
           {/* Features Grid */}
           <div className="grid md:grid-cols-3 gap-8 w-full mt-8">
+            {/* Feature 1: Location */}
             <div className="bg-white p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow">
               <div className="text-4xl mb-4">📍</div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -178,6 +59,7 @@ export default function Home() {
               </p>
             </div>
 
+            {/* Feature 2: Schedule */}
             <div className="bg-white p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow">
               <div className="text-4xl mb-4">⏰</div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -188,6 +70,7 @@ export default function Home() {
               </p>
             </div>
 
+            {/* Feature 3: Goals */}
             <div className="bg-white p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow">
               <div className="text-4xl mb-4">🎯</div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -210,7 +93,7 @@ export default function Home() {
           </div>
 
           {/* How It Works */}
-          <div id="how-it-works" className="mt-20 w-full">
+          <div className="mt-20 w-full">
             <h2 className="text-3xl font-bold text-gray-900 mb-12">
               How GymMatch Works
             </h2>
@@ -274,7 +157,7 @@ export default function Home() {
               Start Finding Partners Now
             </Link>
             <p className="text-gray-500 mt-4">
-              Free to start • Unlimited matches • No credit card required
+              Free to start • 3 matches per day • No credit card required
             </p>
           </div>
         </div>

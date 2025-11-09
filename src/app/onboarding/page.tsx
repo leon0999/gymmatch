@@ -96,12 +96,37 @@ export default function OnboardingPage() {
         return;
       }
 
-      // Step 1: Create anonymous user session
-      const { data: { user }, error: authError } = await supabase.auth.signInAnonymously();
+      // Step 1: Create temporary user session (email-based for MVP)
+      console.log('🔐 Starting temporary sign-in...');
 
-      if (authError || !user) {
-        throw new Error('Failed to create user session');
+      // Generate temporary email and password
+      const tempEmail = `user_${Date.now()}_${Math.random().toString(36).substring(7)}@gymmatch.temp`;
+      const tempPassword = `${Math.random().toString(36)}${Date.now()}${Math.random().toString(36)}`;
+
+      console.log('📧 Creating temporary account:', tempEmail);
+
+      // Sign up with temporary credentials
+      const { data, error: authError } = await supabase.auth.signUp({
+        email: tempEmail,
+        password: tempPassword,
+        options: {
+          emailRedirectTo: undefined, // No email confirmation needed
+          data: {
+            is_temp_account: true,
+            created_at: new Date().toISOString(),
+          }
+        }
+      });
+
+      console.log('Auth result:', { data, authError });
+
+      if (authError || !data.user) {
+        console.error('❌ Auth error:', authError);
+        throw new Error(`Authentication failed: ${authError?.message || 'No user returned'}`);
       }
+
+      const user = data.user;
+      console.log('✅ Temporary user created:', user.id);
 
       // Step 2: Geocode location (MVP: Use dummy coordinates for common cities)
       const cityCoordinates: Record<string, { lat: number; lng: number }> = {
@@ -136,6 +161,7 @@ export default function OnboardingPage() {
       });
 
       // Step 4: Create profile in Supabase
+      console.log('💾 Inserting profile into database...');
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
@@ -143,27 +169,31 @@ export default function OnboardingPage() {
           name: formData.name,
           age: formData.age,
           gender: formData.gender,
-          bio: formData.bio || `Looking for a gym partner to work out ${formData.workoutDays.length}x/week!`,
+          bio: formData.bio || `Looking for a dedicated gym partner to train together ${formData.workoutDays.length || 3}x per week. Let's motivate each other and reach our fitness goals!`,
           location: `POINT(${coords.lng} ${coords.lat})`, // PostGIS format
+          location_name: formData.location, // ✅ 추가
           gym: formData.gym || null,
           fitness_level: formData.fitnessLevel,
           fitness_goals: formData.goals,
           workout_styles: formData.workoutStyles,
           schedule: scheduleData,
-          partner_gender_preference: formData.partnerGender || 'any',
-          age_range_min: formData.ageRangeMin,
-          age_range_max: formData.ageRangeMax,
+          partner_gender: formData.partnerGender || 'any', // ✅ 필드명 수정
+          age_range: [formData.ageRangeMin, formData.ageRangeMax], // ✅ 배열로 수정
           max_distance: formData.maxDistance,
+          level_match: 'any', // ✅ 추가 (기본값 'any')
           is_premium: false,
           photos: [],
         });
 
       if (profileError) {
-        console.error('Profile creation error:', profileError);
-        throw new Error('Failed to create profile');
+        console.error('❌ Profile creation error:', profileError);
+        throw new Error(`Failed to create profile: ${profileError.message}`);
       }
 
+      console.log('✅ Profile created successfully!');
+
       // Step 5: Redirect to discover page
+      console.log('🔄 Redirecting to /discover...');
       router.push('/discover');
     } catch (err: any) {
       console.error('Onboarding error:', err);
