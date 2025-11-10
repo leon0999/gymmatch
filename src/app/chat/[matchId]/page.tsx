@@ -38,6 +38,13 @@ export default function ChatPage() {
   }, [matchId]);
 
   useEffect(() => {
+    // Mark messages as read when entering chat
+    if (currentUser && messages.length > 0) {
+      markMessagesAsRead();
+    }
+  }, [currentUser, messages]);
+
+  useEffect(() => {
     // Auto-scroll to bottom when messages change
     scrollToBottom();
   }, [messages]);
@@ -151,6 +158,24 @@ export default function ChatPage() {
       setMessages(data || []);
     } catch (err) {
       console.error('Error loading messages:', err);
+    }
+  };
+
+  const markMessagesAsRead = async () => {
+    try {
+      // Mark all unread messages from other user as read
+      const { error } = await supabase
+        .from('messages')
+        .update({ read_at: new Date().toISOString() })
+        .eq('match_id', matchId)
+        .neq('sender_id', currentUser.id)
+        .is('read_at', null);
+
+      if (error) {
+        console.error('Error marking messages as read:', error);
+      }
+    } catch (err) {
+      console.error('Error marking messages as read:', err);
     }
   };
 
@@ -337,13 +362,16 @@ export default function ChatPage() {
                     }`}
                   >
                     <p className="text-sm break-words">{msg.message}</p>
-                    <p
-                      className={`text-xs mt-1 ${
+                    <div
+                      className={`text-xs mt-1 flex items-center gap-1 ${
                         isMe ? 'text-teal-100' : 'text-gray-500'
                       }`}
                     >
-                      {formatTime(msg.created_at)}
-                    </p>
+                      <span>{formatTime(msg.created_at)}</span>
+                      {isMe && msg.read_at && (
+                        <span className="text-teal-100">• Read</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

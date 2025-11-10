@@ -21,6 +21,7 @@ interface MatchWithProfile {
   lastMessage?: string;
   lastMessageTime?: string;
   matchedAt: string;
+  unreadCount: number;
 }
 
 export default function MatchesPage() {
@@ -93,12 +94,21 @@ export default function MatchesPage() {
           .limit(1)
           .single();
 
+        // Get unread count (messages sent by other user that are unread)
+        const { count: unreadCount } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('match_id', match.id)
+          .eq('sender_id', otherUserId)
+          .is('read_at', null);
+
         matchesWithProfiles.push({
           matchId: match.id,
           profile,
           lastMessage: lastMsg?.message,
           lastMessageTime: lastMsg?.created_at,
           matchedAt: match.matched_at,
+          unreadCount: unreadCount || 0,
         });
       }
 
@@ -216,9 +226,16 @@ export default function MatchesPage() {
                 className="block bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow p-4"
               >
                 <div className="flex items-center gap-4">
-                  {/* Profile Picture Placeholder */}
-                  <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-2xl">👤</span>
+                  {/* Profile Picture Placeholder with Badge */}
+                  <div className="relative flex-shrink-0">
+                    <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-2xl">👤</span>
+                    </div>
+                    {match.unreadCount > 0 && (
+                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+                        {match.unreadCount > 9 ? '9+' : match.unreadCount}
+                      </div>
+                    )}
                   </div>
 
                   {/* Profile Info */}
