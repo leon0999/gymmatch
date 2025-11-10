@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
+import BottomNav from '@/components/BottomNav';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -269,6 +270,9 @@ export default function MatchesPage() {
           </div>
         )}
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNav />
     </div>
   );
 }

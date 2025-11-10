@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import BottomNav from '@/components/BottomNav';
 
 export default function Home() {
   const router = useRouter();
@@ -287,7 +288,7 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-50 border-t border-gray-200 py-8">
+      <footer className="bg-gray-50 border-t border-gray-200 py-8 mb-20">
         <div className="container mx-auto px-4 text-center text-gray-600">
           <p>© 2025 GymMatch. All rights reserved.</p>
           <p className="text-sm mt-2">
@@ -295,6 +296,9 @@ export default function Home() {
           </p>
         </div>
       </footer>
+
+      {/* Bottom Navigation (only when logged in) */}
+      {isLoggedIn && <BottomNav />}
     </div>
   );
 }

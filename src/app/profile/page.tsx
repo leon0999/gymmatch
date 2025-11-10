@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
 import Link from 'next/link';
+import BottomNav from '@/components/BottomNav';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -265,6 +266,9 @@ export default function ProfilePage() {
           </Link>
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNav />
     </div>
   );
 }

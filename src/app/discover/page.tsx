@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
 import MatchModal from '@/components/MatchModal';
+import BottomNav from '@/components/BottomNav';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -486,6 +487,9 @@ export default function DiscoverPageV2() {
         matchId={newMatchId}
         onClose={() => setShowMatchModal(false)}
       />
+
+      {/* Bottom Navigation */}
+      <BottomNav />
     </div>
   );
 }
