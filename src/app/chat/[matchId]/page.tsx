@@ -51,10 +51,10 @@ export default function ChatPage() {
   }, [messages]);
 
   useEffect(() => {
-    // Subscribe to realtime messages (INSERT and UPDATE) + Presence
-    if (!matchId || !currentUser || !otherProfile) return;
+    // Subscribe to realtime messages (INSERT and UPDATE)
+    if (!matchId) return;
 
-    const channel = supabase
+    const messagesChannel = supabase
       .channel(`messages:${matchId}`)
       .on(
         'postgres_changes',
@@ -86,8 +86,25 @@ export default function ChatPage() {
           );
         }
       )
+      .subscribe();
+
+    console.log('Subscribed to realtime messages for match:', matchId);
+
+    return () => {
+      console.log('Unsubscribing from realtime messages');
+      supabase.removeChannel(messagesChannel);
+    };
+  }, [matchId]);
+
+  useEffect(() => {
+    // Subscribe to global presence to check other user's online status
+    if (!otherProfile) return;
+
+    const presenceChannel = supabase.channel('global-presence');
+
+    presenceChannel
       .on('presence', { event: 'sync' }, () => {
-        const presenceState = channel.presenceState();
+        const presenceState = presenceChannel.presenceState();
         const otherUserPresent = Object.values(presenceState).some(
           (presences: any) =>
             presences.some((p: any) => p.user_id === otherProfile.user_id)
@@ -95,23 +112,12 @@ export default function ChatPage() {
         setIsOtherUserOnline(otherUserPresent);
         console.log('Other user online:', otherUserPresent);
       })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          // Track own presence
-          await channel.track({
-            user_id: currentUser.id,
-            online_at: new Date().toISOString(),
-          });
-        }
-      });
-
-    console.log('Subscribed to realtime messages + presence for match:', matchId);
+      .subscribe();
 
     return () => {
-      console.log('Unsubscribing from realtime messages + presence');
-      supabase.removeChannel(channel);
+      supabase.removeChannel(presenceChannel);
     };
-  }, [matchId, currentUser, otherProfile]);
+  }, [otherProfile]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
