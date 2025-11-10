@@ -61,6 +61,37 @@ export default function MatchesPage() {
     };
   }, [currentUser]);
 
+  useEffect(() => {
+    // Subscribe to global presence to check online status
+    if (matches.length === 0) return;
+
+    const presenceChannel = supabase.channel('global-presence');
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const presenceState = presenceChannel.presenceState();
+        console.log('Presence state on matches page:', presenceState);
+
+        // Update online status for each match
+        setMatches((prevMatches) =>
+          prevMatches.map((match) => {
+            const isOnline = Object.values(presenceState).some(
+              (presences: any) =>
+                presences.some((p: any) => p.user_id === match.profile.user_id)
+            );
+            return { ...match, isOnline };
+          })
+        );
+      })
+      .subscribe();
+
+    console.log('Subscribed to global presence on matches page');
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, [matches.length]);
+
   const loadMatches = async () => {
     try {
       setLoading(true);
