@@ -35,6 +35,31 @@ export default function MatchesPage() {
     loadMatches();
   }, []);
 
+  useEffect(() => {
+    // Subscribe to new messages for realtime updates
+    if (!currentUser) return;
+
+    const channel = supabase
+      .channel('matches-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages',
+        },
+        () => {
+          // Reload matches when any message changes
+          loadMatches();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser]);
+
   const loadMatches = async () => {
     try {
       setLoading(true);
