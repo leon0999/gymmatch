@@ -151,16 +151,22 @@ export default function Home() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 mb-16">
             <Link
-              href="/onboarding"
+              href="/signup"
               className="px-8 py-4 bg-teal-600 text-white text-lg font-semibold rounded-full hover:bg-teal-700 transition-colors shadow-lg hover:shadow-xl"
             >
               Get Started Free
+            </Link>
+            <Link
+              href="/login"
+              className="px-8 py-4 bg-white text-teal-600 text-lg font-semibold rounded-full border-2 border-teal-600 hover:bg-teal-50 transition-colors"
+            >
+              Log In
             </Link>
             <button
               onClick={() => {
                 document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-8 py-4 bg-white text-teal-600 text-lg font-semibold rounded-full border-2 border-teal-600 hover:bg-teal-50 transition-colors"
+              className="px-8 py-4 bg-white text-gray-600 text-lg font-semibold rounded-full border-2 border-gray-300 hover:bg-gray-50 transition-colors"
             >
               See How It Works
             </button>
@@ -268,7 +274,7 @@ export default function Home() {
           {/* Final CTA */}
           <div className="mt-20 mb-8">
             <Link
-              href="/onboarding"
+              href="/signup"
               className="px-12 py-5 bg-teal-600 text-white text-xl font-bold rounded-full hover:bg-teal-700 transition-colors shadow-xl hover:shadow-2xl inline-block"
             >
               Start Finding Partners Now

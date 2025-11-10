@@ -11,7 +11,7 @@
  * 5. Preferences (partner preferences)
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { POPULAR_GYMS, FITNESS_LEVELS, FITNESS_GOALS, WORKOUT_STYLES } from '@/lib/constants';
@@ -20,6 +20,10 @@ import { supabase } from '@/lib/supabase';
 type Step = 1 | 2 | 3 | 4 | 5;
 
 interface OnboardingData {
+  // Step 0: Account Creation
+  email: string;
+  password: string;
+
   // Step 1: Basic Info
   name: string;
   age: number | null;
@@ -51,7 +55,10 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [formData, setFormData] = useState<OnboardingData>({
+    email: '',
+    password: '',
     name: '',
     age: null,
     gender: '',
@@ -68,6 +75,36 @@ export default function OnboardingPage() {
     ageRangeMax: 35,
     maxDistance: 5,
   });
+
+  // Check if user is logged in
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      // Not logged in - redirect to signup
+      router.push('/signup');
+      return;
+    }
+
+    // Check if profile already exists
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profile) {
+      // Profile exists - redirect to home
+      router.push('/');
+      return;
+    }
+
+    setCurrentUser(user);
+  };
 
   const totalSteps = 5;
   const progress = (currentStep / totalSteps) * 100;
@@ -96,37 +133,13 @@ export default function OnboardingPage() {
         return;
       }
 
-      // Step 1: Create temporary user session (email-based for MVP)
-      console.log('🔐 Starting temporary sign-in...');
-
-      // Generate temporary email and password
-      const tempEmail = `user_${Date.now()}_${Math.random().toString(36).substring(7)}@gymmatch.temp`;
-      const tempPassword = `${Math.random().toString(36)}${Date.now()}${Math.random().toString(36)}`;
-
-      console.log('📧 Creating temporary account:', tempEmail);
-
-      // Sign up with temporary credentials
-      const { data, error: authError } = await supabase.auth.signUp({
-        email: tempEmail,
-        password: tempPassword,
-        options: {
-          emailRedirectTo: undefined, // No email confirmation needed
-          data: {
-            is_temp_account: true,
-            created_at: new Date().toISOString(),
-          }
-        }
-      });
-
-      console.log('Auth result:', { data, authError });
-
-      if (authError || !data.user) {
-        console.error('❌ Auth error:', authError);
-        throw new Error(`Authentication failed: ${authError?.message || 'No user returned'}`);
+      if (!currentUser) {
+        setError('Session expired. Please log in again.');
+        router.push('/signup');
+        return;
       }
 
-      const user = data.user;
-      console.log('✅ Temporary user created:', user.id);
+      console.log('💾 Creating profile for user:', currentUser.id);
 
       // Step 2: Geocode location (MVP: Use dummy coordinates for common cities)
       const cityCoordinates: Record<string, { lat: number; lng: number }> = {
@@ -145,7 +158,7 @@ export default function OnboardingPage() {
       const locationKey = formData.location.toLowerCase().trim();
       const coords = cityCoordinates[locationKey] || { lat: 40.7831, lng: -73.9712 }; // Default to NYC
 
-      // Step 3: Convert schedule data
+      // Step 2: Convert schedule data
       const scheduleData = formData.workoutDays.map((day) => {
         const timeMap: Record<string, string> = {
           'morning': '06:00-09:00',
@@ -160,12 +173,12 @@ export default function OnboardingPage() {
         };
       });
 
-      // Step 4: Create profile in Supabase
+      // Step 3: Create profile in Supabase
       console.log('💾 Inserting profile into database...');
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
-          user_id: user.id,
+          user_id: currentUser.id,
           name: formData.name,
           age: formData.age,
           gender: formData.gender,
@@ -192,7 +205,7 @@ export default function OnboardingPage() {
 
       console.log('✅ Profile created successfully!');
 
-      // Step 5: Redirect to discover page
+      // Step 4: Redirect to discover page
       console.log('🔄 Redirecting to /discover...');
       router.push('/discover');
     } catch (err: any) {
