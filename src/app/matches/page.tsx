@@ -252,10 +252,18 @@ export default function MatchesPage() {
                 className="block bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow p-4"
               >
                 <div className="flex items-center gap-4">
-                  {/* Profile Picture Placeholder with Badge + Online Status */}
+                  {/* Profile Picture with Badge + Online Status */}
                   <div className="relative flex-shrink-0">
-                    <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-2xl">👤</span>
+                    <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+                      {match.profile.photo_url ? (
+                        <img
+                          src={match.profile.photo_url}
+                          alt={match.profile.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-2xl">👤</span>
+                      )}
                     </div>
                     {match.unreadCount > 0 && (
                       <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">

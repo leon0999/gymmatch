@@ -20,6 +20,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -81,6 +82,75 @@ export default function ProfilePage() {
     }
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true);
+
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file');
+        return;
+      }
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image must be less than 5MB');
+        return;
+      }
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        alert('Failed to upload photo: ' + uploadError.message);
+        return;
+      }
+
+      // Get public URL
+      const { data } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(fileName);
+
+      // Update profile with photo URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ photo_url: data.publicUrl })
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        console.error('Update error:', updateError);
+        alert('Failed to update profile');
+        return;
+      }
+
+      // Reload profile
+      await loadProfile();
+      alert('Photo uploaded successfully!');
+    } catch (err) {
+      console.error('Error uploading photo:', err);
+      alert('Something went wrong');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center">
@@ -138,11 +208,29 @@ export default function ProfilePage() {
         {/* Profile Card */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
           {/* Profile Header */}
-          <div className="h-48 bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center">
+          <div className="h-48 bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center relative">
             <div className="text-center">
-              <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                <span className="text-6xl">👤</span>
+              <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 overflow-hidden">
+                {profile.photo_url ? (
+                  <img
+                    src={profile.photo_url}
+                    alt={profile.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-6xl">👤</span>
+                )}
               </div>
+              <label className="cursor-pointer inline-block px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-white text-sm font-medium transition-colors">
+                {uploading ? 'Uploading...' : 'Change Photo'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  disabled={uploading}
+                  className="hidden"
+                />
+              </label>
             </div>
           </div>
 

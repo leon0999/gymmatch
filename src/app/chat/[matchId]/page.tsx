@@ -325,8 +325,16 @@ export default function ChatPage() {
               </svg>
             </button>
 
-            <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-xl">👤</span>
+            <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+              {otherProfile.photo_url ? (
+                <img
+                  src={otherProfile.photo_url}
+                  alt={otherProfile.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-xl">👤</span>
+              )}
             </div>
 
             <div>

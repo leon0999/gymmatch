@@ -344,14 +344,22 @@ export default function DiscoverPageV2() {
 
         {/* Match Card */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
-          {/* Profile Image Placeholder */}
-          <div className="h-96 bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-6xl">👤</span>
+          {/* Profile Image */}
+          <div className="h-96 bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center overflow-hidden relative">
+            {currentMatch.photo_url ? (
+              <img
+                src={currentMatch.photo_url}
+                alt={currentMatch.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="text-center">
+                <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-6xl">👤</span>
+                </div>
+                <p className="text-white text-sm opacity-75">Photo coming soon</p>
               </div>
-              <p className="text-white text-sm opacity-75">Photo coming soon</p>
-            </div>
+            )}
           </div>
 
           {/* Profile Info */}
