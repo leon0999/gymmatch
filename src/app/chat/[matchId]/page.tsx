@@ -50,7 +50,7 @@ export default function ChatPage() {
   }, [messages]);
 
   useEffect(() => {
-    // Subscribe to realtime messages
+    // Subscribe to realtime messages (INSERT and UPDATE)
     if (!matchId) return;
 
     const channel = supabase
@@ -67,6 +67,22 @@ export default function ChatPage() {
           console.log('New message received:', payload);
           const newMsg = payload.new as Message;
           setMessages((prev) => [...prev, newMsg]);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `match_id=eq.${matchId}`,
+        },
+        (payload) => {
+          console.log('Message updated (read):', payload);
+          const updatedMsg = payload.new as Message;
+          setMessages((prev) =>
+            prev.map((msg) => (msg.id === updatedMsg.id ? updatedMsg : msg))
+          );
         }
       )
       .subscribe();
