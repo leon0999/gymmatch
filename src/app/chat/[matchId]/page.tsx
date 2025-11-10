@@ -42,6 +42,36 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Subscribe to realtime messages
+    if (!matchId) return;
+
+    const channel = supabase
+      .channel(`messages:${matchId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `match_id=eq.${matchId}`,
+        },
+        (payload) => {
+          console.log('New message received:', payload);
+          const newMsg = payload.new as Message;
+          setMessages((prev) => [...prev, newMsg]);
+        }
+      )
+      .subscribe();
+
+    console.log('Subscribed to realtime messages for match:', matchId);
+
+    return () => {
+      console.log('Unsubscribing from realtime messages');
+      supabase.removeChannel(channel);
+    };
+  }, [matchId]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -147,8 +177,7 @@ export default function ChatPage() {
       // Clear input
       setNewMessage('');
 
-      // Reload messages
-      await loadMessages();
+      // Note: No need to reload messages - Realtime subscription will handle it
     } catch (err) {
       console.error('Error sending message:', err);
     } finally {
