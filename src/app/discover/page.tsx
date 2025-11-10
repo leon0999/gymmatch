@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
+import MatchModal from '@/components/MatchModal';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -29,6 +30,9 @@ export default function DiscoverPageV2() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showMatchModal, setShowMatchModal] = useState(false);
+  const [matchedUser, setMatchedUser] = useState<Profile | null>(null);
+  const [newMatchId, setNewMatchId] = useState<string | null>(null);
 
   useEffect(() => {
     loadMatches();
@@ -242,15 +246,17 @@ export default function DiscoverPageV2() {
 
       if (mutualLike) {
         // Create mutual match
-        const { error } = await supabase.from('matches').insert({
+        const { data: newMatch, error } = await supabase.from('matches').insert({
           user1_id: userId,
           user2_id: targetUserId,
-        });
+        }).select().single();
 
-        if (!error) {
+        if (!error && newMatch) {
           console.log('🎉 It\'s a match!');
-          // TODO: Show match modal/notification
-          alert(`🎉 It's a match! You and ${matches[currentIndex].name} can now chat!`);
+          // Show match success modal
+          setMatchedUser(matches[currentIndex]);
+          setNewMatchId(newMatch.id);
+          setShowMatchModal(true);
         }
       }
     } catch (err) {
@@ -472,6 +478,14 @@ export default function DiscoverPageV2() {
           </p>
         </div>
       </div>
+
+      {/* Match Success Modal */}
+      <MatchModal
+        isOpen={showMatchModal}
+        matchedUser={matchedUser}
+        matchId={newMatchId}
+        onClose={() => setShowMatchModal(false)}
+      />
     </div>
   );
 }
