@@ -30,6 +30,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isOtherUserOnline, setIsOtherUserOnline] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -50,8 +51,8 @@ export default function ChatPage() {
   }, [messages]);
 
   useEffect(() => {
-    // Subscribe to realtime messages (INSERT and UPDATE)
-    if (!matchId) return;
+    // Subscribe to realtime messages (INSERT and UPDATE) + Presence
+    if (!matchId || !currentUser || !otherProfile) return;
 
     const channel = supabase
       .channel(`messages:${matchId}`)
@@ -85,15 +86,32 @@ export default function ChatPage() {
           );
         }
       )
-      .subscribe();
+      .on('presence', { event: 'sync' }, () => {
+        const presenceState = channel.presenceState();
+        const otherUserPresent = Object.values(presenceState).some(
+          (presences: any) =>
+            presences.some((p: any) => p.user_id === otherProfile.user_id)
+        );
+        setIsOtherUserOnline(otherUserPresent);
+        console.log('Other user online:', otherUserPresent);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          // Track own presence
+          await channel.track({
+            user_id: currentUser.id,
+            online_at: new Date().toISOString(),
+          });
+        }
+      });
 
-    console.log('Subscribed to realtime messages for match:', matchId);
+    console.log('Subscribed to realtime messages + presence for match:', matchId);
 
     return () => {
-      console.log('Unsubscribing from realtime messages');
+      console.log('Unsubscribing from realtime messages + presence');
       supabase.removeChannel(channel);
     };
-  }, [matchId]);
+  }, [matchId, currentUser, otherProfile]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -312,9 +330,17 @@ export default function ChatPage() {
             </div>
 
             <div>
-              <h2 className="font-bold text-gray-900">
-                {otherProfile.name}, {otherProfile.age}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="font-bold text-gray-900">
+                  {otherProfile.name}, {otherProfile.age}
+                </h2>
+                {isOtherUserOnline && (
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-xs text-green-600 font-medium">Online</span>
+                  </div>
+                )}
+              </div>
               <p className="text-sm text-gray-600">{otherProfile.location_name}</p>
             </div>
           </div>
