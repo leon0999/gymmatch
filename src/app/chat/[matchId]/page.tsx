@@ -162,24 +162,41 @@ export default function ChatPage() {
     try {
       setSending(true);
 
-      const { error } = await supabase.from('messages').insert({
+      // Get current authenticated user (for RLS)
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+
+      if (!authUser) {
+        alert('Authentication error. Please log in again.');
+        return;
+      }
+
+      console.log('Auth user ID:', authUser.id);
+      console.log('Current user ID:', currentUser.id);
+      console.log('Sending message with match_id:', matchId);
+
+      const { data, error } = await supabase.from('messages').insert({
         match_id: matchId,
-        sender_id: currentUser.id,
+        sender_id: authUser.id, // Use authenticated user ID for RLS
         message: newMessage.trim(),
       });
 
       if (error) {
         console.error('Error sending message:', error);
-        alert('Failed to send message. Please try again.');
+        console.error('Error code:', error.code);
+        console.error('Error details:', error.details);
+        console.error('Error hint:', error.hint);
+        alert(`Failed to send message: ${error.message || 'Unknown error'}`);
         return;
       }
+
+      console.log('Message sent successfully:', data);
 
       // Clear input
       setNewMessage('');
 
       // Note: No need to reload messages - Realtime subscription will handle it
     } catch (err) {
-      console.error('Error sending message:', err);
+      console.error('Error sending message (catch):', err);
     } finally {
       setSending(false);
     }
