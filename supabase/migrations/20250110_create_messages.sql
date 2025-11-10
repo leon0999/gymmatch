@@ -8,11 +8,7 @@ CREATE TABLE IF NOT EXISTS messages (
   sender_id UUID NOT NULL REFERENCES profiles(user_id) ON DELETE CASCADE,
   message TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  read_at TIMESTAMPTZ,
-
-  -- Indexes for performance
-  CONSTRAINT messages_match_id_fkey FOREIGN KEY (match_id) REFERENCES matches(id),
-  CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES profiles(user_id)
+  read_at TIMESTAMPTZ DEFAULT NULL
 );
 
 -- Create indexes
