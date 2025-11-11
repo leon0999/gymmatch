@@ -30,12 +30,33 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [isReporting, setIsReporting] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadChatData();
   }, [matchId]);
+
+  useEffect(() => {
+    // Close menu when clicking outside
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showMenu) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showMenu]);
 
   useEffect(() => {
     // Mark messages as read when entering chat
@@ -253,6 +274,73 @@ export default function ChatPage() {
     });
   };
 
+  const handleReport = async () => {
+    if (!reportReason.trim() || !currentUser || !otherProfile) return;
+
+    try {
+      setIsReporting(true);
+
+      // In a real app, you'd save this to a reports table
+      // For now, we'll just show success and unmatch
+      console.log('Reporting user:', otherProfile.user_id);
+      console.log('Reason:', reportReason);
+
+      // Unmatch after reporting
+      await handleUnmatch();
+
+      alert('User reported successfully. We\'ll review this report.');
+      router.push('/matches');
+    } catch (err) {
+      console.error('Error reporting user:', err);
+      alert('Failed to report user. Please try again.');
+    } finally {
+      setIsReporting(false);
+      setShowReportModal(false);
+      setReportReason('');
+    }
+  };
+
+  const handleUnmatch = async () => {
+    if (!currentUser) return;
+
+    try {
+      const { error } = await supabase
+        .from('matches')
+        .delete()
+        .eq('id', matchId);
+
+      if (error) {
+        console.error('Error unmatching:', error);
+        throw error;
+      }
+    } catch (err) {
+      console.error('Error unmatching:', err);
+      throw err;
+    }
+  };
+
+  const handleBlock = async () => {
+    if (!currentUser || !otherProfile) return;
+
+    const confirmed = confirm(
+      `Are you sure you want to block ${otherProfile.name}? You won't see each other anymore.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      // In a real app, you'd save this to a blocks table
+      // For now, we'll just unmatch
+      await handleUnmatch();
+
+      alert(`${otherProfile.name} has been blocked.`);
+      router.push('/matches');
+    } catch (err) {
+      console.error('Error blocking user:', err);
+      alert('Failed to block user. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center">
@@ -328,21 +416,56 @@ export default function ChatPage() {
             </div>
           </div>
 
-          <button className="text-gray-400 hover:text-gray-600">
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="relative">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="text-gray-400 hover:text-gray-600"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-              />
-            </svg>
-          </button>
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                />
+              </svg>
+            </button>
+
+            {/* Dropdown Menu */}
+            {showMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    setShowReportModal(true);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  Report User
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    handleBlock();
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                  Block User
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -444,6 +567,87 @@ export default function ChatPage() {
           </form>
         </div>
       </div>
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">Report User</h3>
+              <button
+                onClick={() => {
+                  setShowReportModal(false);
+                  setReportReason('');
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <p className="text-gray-600 mb-4">
+              Please tell us why you're reporting {otherProfile?.name}. We'll review this report and take appropriate action.
+            </p>
+
+            <div className="space-y-3 mb-4">
+              {[
+                'Inappropriate behavior',
+                'Harassment or bullying',
+                'Spam or scam',
+                'Fake profile',
+                'Other'
+              ].map((reason) => (
+                <button
+                  key={reason}
+                  onClick={() => setReportReason(reason)}
+                  className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-colors ${
+                    reportReason === reason
+                      ? 'border-teal-600 bg-teal-50 text-teal-900'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                  }`}
+                >
+                  {reason}
+                </button>
+              ))}
+            </div>
+
+            {reportReason === 'Other' && (
+              <textarea
+                value={reportReason === 'Other' ? '' : reportReason}
+                onChange={(e) => setReportReason(`Other: ${e.target.value}`)}
+                placeholder="Please describe the issue..."
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent mb-4"
+                rows={3}
+              />
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowReportModal(false);
+                  setReportReason('');
+                }}
+                className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReport}
+                disabled={!reportReason || isReporting}
+                className={`flex-1 px-4 py-3 font-semibold rounded-lg transition-colors ${
+                  !reportReason || isReporting
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-red-600 text-white hover:bg-red-700'
+                }`}
+              >
+                {isReporting ? 'Reporting...' : 'Submit Report'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
