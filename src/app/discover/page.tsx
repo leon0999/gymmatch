@@ -93,10 +93,36 @@ export default function DiscoverPageV2() {
         (p) => !swipedUserIds.has(p.user_id)
       );
 
-      // Calculate match scores (simplified for MVP)
-      const scored = unseenProfiles.map((match) => ({
+      // Apply preference filters
+      const filteredProfiles = unseenProfiles.filter((match) => {
+        // Gender filter
+        if (profile.partner_gender !== 'any' && match.gender !== profile.partner_gender) {
+          return false;
+        }
+
+        // Age filter
+        if (profile.age_range && profile.age_range.length === 2) {
+          const [minAge, maxAge] = profile.age_range;
+          if (match.age < minAge || match.age > maxAge) {
+            return false;
+          }
+        }
+
+        // Distance filter (simplified: same city check)
+        if (profile.max_distance && profile.max_distance < 10) {
+          // If max_distance < 10 miles, require same city
+          if (profile.location_name?.toLowerCase() !== match.location_name?.toLowerCase()) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      // Calculate match scores (improved algorithm)
+      const scored = filteredProfiles.map((match) => ({
         ...match,
-        matchScore: calculateSimpleScore(profile, match),
+        matchScore: calculateImprovedScore(profile, match),
         distance: calculateSimpleDistance(profile, match),
         matchReasons: getMatchReasons(profile, match),
       }));
@@ -113,34 +139,48 @@ export default function DiscoverPageV2() {
     }
   };
 
-  const calculateSimpleScore = (user: Profile, match: Profile): number => {
-    let score = 50; // Base score
+  const calculateImprovedScore = (user: Profile, match: Profile): number => {
+    let score = 0;
 
-    // Same city: +30
+    // 1. Location compatibility (0-25 points)
     if (user.location_name?.toLowerCase() === match.location_name?.toLowerCase()) {
-      score += 30;
+      score += 25; // Same city is very important
+    } else {
+      score += 5; // Different city but still possible
     }
 
-    // Fitness level match: +10
+    // 2. Fitness level compatibility (0-20 points)
     if (user.fitness_level === match.fitness_level) {
-      score += 10;
+      score += 20; // Perfect match
+    } else {
+      // Adjacent levels get partial points
+      const levels = ['beginner', 'intermediate', 'advanced'];
+      const userLevel = levels.indexOf(user.fitness_level || 'beginner');
+      const matchLevel = levels.indexOf(match.fitness_level || 'beginner');
+      const diff = Math.abs(userLevel - matchLevel);
+      if (diff === 1) score += 10; // One level apart
+      // 2+ levels apart: 0 points
     }
 
-    // Goals overlap: +10
+    // 3. Fitness goals overlap (0-20 points)
     const commonGoals = user.fitness_goals?.filter((g) =>
       match.fitness_goals?.includes(g)
     ) || [];
-    score += Math.min(10, commonGoals.length * 5);
+    if (commonGoals.length > 0) {
+      score += Math.min(20, commonGoals.length * 7); // Up to 20 points
+    }
 
-    // Workout styles overlap: +10
+    // 4. Workout styles overlap (0-20 points)
     const commonStyles = user.workout_styles?.filter((s) =>
       match.workout_styles?.includes(s)
     ) || [];
-    score += Math.min(10, commonStyles.length * 5);
+    if (commonStyles.length > 0) {
+      score += Math.min(20, commonStyles.length * 7); // Up to 20 points
+    }
 
-    // Same gym: +20
-    if (user.gym && match.gym && user.gym === match.gym) {
-      score += 20;
+    // 5. Same gym (0-15 points) - HUGE bonus!
+    if (user.gym && match.gym && user.gym.toLowerCase() === match.gym.toLowerCase()) {
+      score += 15;
     }
 
     return Math.min(100, Math.round(score));
@@ -157,26 +197,50 @@ export default function DiscoverPageV2() {
   const getMatchReasons = (user: Profile, match: Profile): string[] => {
     const reasons: string[] = [];
 
+    // Same gym is the strongest signal
+    if (user.gym && match.gym && user.gym.toLowerCase() === match.gym.toLowerCase()) {
+      reasons.push(`🏢 Same gym: ${match.gym}`);
+    }
+
+    // Same city
     if (user.location_name?.toLowerCase() === match.location_name?.toLowerCase()) {
       reasons.push(`📍 Both in ${match.location_name}`);
     }
 
+    // Fitness level
     if (user.fitness_level === match.fitness_level) {
-      reasons.push(`💪 Both ${match.fitness_level}`);
+      reasons.push(`💪 Both ${match.fitness_level} level`);
+    } else {
+      const levels = ['beginner', 'intermediate', 'advanced'];
+      const userLevel = levels.indexOf(user.fitness_level || 'beginner');
+      const matchLevel = levels.indexOf(match.fitness_level || 'beginner');
+      const diff = Math.abs(userLevel - matchLevel);
+      if (diff === 1) {
+        reasons.push(`💪 Compatible fitness levels`);
+      }
     }
 
+    // Common goals
     const commonGoals = user.fitness_goals?.filter((g) =>
       match.fitness_goals?.includes(g)
     ) || [];
-    if (commonGoals.length > 0) {
-      reasons.push(`🎯 ${commonGoals[0]}`);
+    if (commonGoals.length >= 2) {
+      reasons.push(`🎯 ${commonGoals.length} shared goals`);
+    } else if (commonGoals.length === 1) {
+      reasons.push(`🎯 ${commonGoals[0].replace('_', ' ')}`);
     }
 
-    if (user.gym && match.gym && user.gym === match.gym) {
-      reasons.push(`🏢 ${match.gym}`);
+    // Common workout styles
+    const commonStyles = user.workout_styles?.filter((s) =>
+      match.workout_styles?.includes(s)
+    ) || [];
+    if (commonStyles.length >= 2) {
+      reasons.push(`🏋️ ${commonStyles.length} shared workout styles`);
+    } else if (commonStyles.length === 1) {
+      reasons.push(`🏋️ Both enjoy ${commonStyles[0]}`);
     }
 
-    return reasons.slice(0, 3);
+    return reasons.slice(0, 4); // Show up to 4 reasons
   };
 
   const handleLike = async () => {
