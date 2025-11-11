@@ -361,9 +361,9 @@ export default function DiscoverPageV2() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center p-4">
         <div className="text-center max-w-md">
-          <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-24 h-24 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
             <svg
-              className="w-10 h-10 text-teal-600"
+              className="w-12 h-12 text-teal-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -372,22 +372,33 @@ export default function DiscoverPageV2() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M5 13l4 4L19 7"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            You've seen everyone!
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">
+            All caught up!
           </h2>
-          <p className="text-gray-600 mb-6">
-            Check back later for new gym partners.
+          <p className="text-gray-600 mb-2">
+            You've seen all available matches in your area.
           </p>
-          <button
-            onClick={() => router.push('/')}
-            className="px-6 py-3 bg-teal-600 text-white font-semibold rounded-full hover:bg-teal-700"
-          >
-            Back to Home
-          </button>
+          <p className="text-sm text-gray-500 mb-8">
+            Check back soon for new gym partners!
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push('/')}
+              className="w-full px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-full hover:from-teal-600 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              Back to Home
+            </button>
+            <button
+              onClick={loadMatches}
+              className="w-full px-6 py-3 bg-white text-teal-600 font-semibold rounded-full border-2 border-teal-600 hover:bg-teal-50 transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -399,10 +410,19 @@ export default function DiscoverPageV2() {
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Discover</h1>
-          <div className="text-sm text-gray-500">
-            {currentIndex + 1} / {matches.length}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-2xl font-bold text-gray-900">Discover</h1>
+            <div className="text-sm font-medium text-gray-600">
+              {currentIndex + 1} of {matches.length}
+            </div>
+          </div>
+          {/* Progress Bar */}
+          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-teal-500 to-blue-500 h-full rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${((currentIndex + 1) / matches.length) * 100}%` }}
+            />
           </div>
         </div>
 
@@ -511,13 +531,15 @@ export default function DiscoverPageV2() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-4 justify-center">
+        <div className="flex gap-6 justify-center items-center">
+          {/* Pass Button */}
           <button
             onClick={handlePass}
-            className="w-20 h-20 bg-white border-4 border-gray-300 rounded-full flex items-center justify-center hover:border-red-400 hover:bg-red-50 transition-colors group"
+            className="w-16 h-16 bg-white border-4 border-gray-300 rounded-full flex items-center justify-center hover:border-red-400 hover:bg-red-50 hover:scale-110 active:scale-95 transition-all duration-200 group shadow-md"
+            aria-label="Pass"
           >
             <svg
-              className="w-10 h-10 text-gray-400 group-hover:text-red-500"
+              className="w-8 h-8 text-gray-400 group-hover:text-red-500 transition-colors"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -531,9 +553,11 @@ export default function DiscoverPageV2() {
             </svg>
           </button>
 
+          {/* Like Button */}
           <button
             onClick={handleLike}
-            className="w-20 h-20 bg-teal-600 rounded-full flex items-center justify-center hover:bg-teal-700 transition-colors shadow-lg"
+            className="w-20 h-20 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center hover:from-teal-600 hover:to-teal-700 hover:scale-110 active:scale-95 transition-all duration-200 shadow-xl hover:shadow-2xl"
+            aria-label="Like"
           >
             <svg
               className="w-10 h-10 text-white"
@@ -543,11 +567,29 @@ export default function DiscoverPageV2() {
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
             </svg>
           </button>
+
+          {/* Super Like Button (optional future feature placeholder) */}
+          <button
+            onClick={handleLike}
+            className="w-16 h-16 bg-white border-4 border-blue-300 rounded-full flex items-center justify-center hover:border-blue-500 hover:bg-blue-50 hover:scale-110 active:scale-95 transition-all duration-200 group shadow-md"
+            aria-label="Super Like"
+          >
+            <svg
+              className="w-8 h-8 text-blue-400 group-hover:text-blue-600 transition-colors"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+            </svg>
+          </button>
         </div>
 
-        <div className="text-center mt-6">
-          <p className="text-sm text-gray-500">
-            Swipe right to like, left to pass
+        <div className="text-center mt-6 space-y-2">
+          <p className="text-sm font-medium text-gray-700">
+            ❤️ Like • ⭐ Super Like • ✕ Pass
+          </p>
+          <p className="text-xs text-gray-500">
+            Tap the buttons or swipe to choose
           </p>
         </div>
       </div>
