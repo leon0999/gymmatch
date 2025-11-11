@@ -76,15 +76,25 @@ export default function MatchesPage() {
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
         const presenceState = presenceChannel.presenceState();
-        console.log('Presence state on matches page:', presenceState);
+        console.log('MatchesPage - Presence state:', presenceState);
+        console.log('MatchesPage - Presence keys:', Object.keys(presenceState));
+
+        // Log each presence entry
+        Object.entries(presenceState).forEach(([key, presences]) => {
+          console.log('MatchesPage - Key:', key, 'Presences:', presences);
+        });
 
         // Update online status for each match
         setMatches((prevMatches) =>
           prevMatches.map((match) => {
             const isOnline = Object.values(presenceState).some(
               (presences: any) =>
-                presences.some((p: any) => p.user_id === match.profile.user_id)
+                presences.some((p: any) => {
+                  console.log('MatchesPage - Checking presence:', p, 'against user:', match.profile.user_id);
+                  return p.user_id === match.profile.user_id;
+                })
             );
+            console.log('MatchesPage - User', match.profile.name, 'online:', isOnline);
             return { ...match, isOnline };
           })
         );

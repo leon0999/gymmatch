@@ -31,16 +31,20 @@ export default function GlobalPresence() {
       // Subscribe and track presence
       channel
         .on('presence', { event: 'sync' }, () => {
-          console.log('Presence synced');
+          const state = channel!.presenceState();
+          console.log('GlobalPresence - Presence synced, state:', state);
+          console.log('GlobalPresence - Number of users online:', Object.keys(state).length);
         })
         .subscribe(async (status) => {
+          console.log('GlobalPresence - Subscribe status:', status);
           if (status === 'SUBSCRIBED') {
             // Track user's presence
-            await channel!.track({
+            const result = await channel!.track({
               user_id: user.id,
               online_at: new Date().toISOString(),
             });
-            console.log('User presence tracked:', user.id);
+            console.log('GlobalPresence - User presence tracked:', user.id);
+            console.log('GlobalPresence - Track result:', result);
           }
         });
     };
