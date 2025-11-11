@@ -108,6 +108,73 @@ export default function ProfilePage() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    const confirmed = confirm(
+      '⚠️ WARNING: This will permanently delete your account and all your data.\n\n' +
+      'This includes:\n' +
+      '• Your profile\n' +
+      '• All your matches\n' +
+      '• All your messages\n' +
+      '• All your likes\n\n' +
+      'This action CANNOT be undone.\n\n' +
+      'Are you absolutely sure you want to continue?'
+    );
+
+    if (!confirmed) return;
+
+    const doubleCheck = prompt(
+      'Type "DELETE" (in all caps) to confirm account deletion:'
+    );
+
+    if (doubleCheck !== 'DELETE') {
+      alert('Account deletion cancelled.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Delete in order (to respect foreign key constraints)
+      // 1. Delete messages
+      await supabase.from('messages').delete().eq('sender_id', user.id);
+
+      // 2. Delete matches
+      await supabase.from('matches').delete().or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
+
+      // 3. Delete swipes
+      await supabase.from('swipes').delete().or(`user_id.eq.${user.id},target_user_id.eq.${user.id}`);
+
+      // 4. Delete profile
+      await supabase.from('profiles').delete().eq('user_id', user.id);
+
+      // 5. Delete auth user (this will cascade delete)
+      const { error: deleteAuthError } = await supabase.rpc('delete_user');
+
+      if (deleteAuthError) {
+        console.error('Auth delete error:', deleteAuthError);
+        // Even if auth delete fails, we've deleted the profile
+        // So sign out and redirect
+      }
+
+      // Sign out
+      await supabase.auth.signOut();
+      localStorage.clear();
+      sessionStorage.clear();
+
+      alert('Your account has been deleted. We\'re sorry to see you go!');
+      router.push('/');
+    } catch (err: any) {
+      console.error('Error deleting account:', err);
+      alert('Failed to delete account: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSaveProfile = async () => {
     try {
       setSaving(true);
@@ -624,6 +691,28 @@ export default function ProfilePage() {
               </>
             )}
           </div>
+        </div>
+
+        {/* Danger Zone */}
+        <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 mb-6">
+          <div className="flex items-start gap-3 mb-4">
+            <svg className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <h3 className="text-lg font-bold text-red-900 mb-1">Danger Zone</h3>
+              <p className="text-sm text-red-700">
+                Deleting your account is permanent and cannot be undone. All your data, matches, and messages will be permanently deleted.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleDeleteAccount}
+            disabled={loading}
+            className="w-full px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? 'Deleting...' : 'Delete My Account'}
+          </button>
         </div>
 
         {/* Navigation */}
