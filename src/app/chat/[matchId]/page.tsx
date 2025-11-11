@@ -100,13 +100,8 @@ export default function ChatPage() {
     // Subscribe to global presence to check other user's online status
     if (!otherProfile) return;
 
-    const presenceChannel = supabase.channel('global-presence', {
-      config: {
-        presence: {
-          key: '',
-        },
-      },
-    });
+    // Subscribe to the same global-presence channel (no config needed for listeners)
+    const presenceChannel = supabase.channel('global-presence');
 
     presenceChannel
       .on('presence', { event: 'sync' }, () => {

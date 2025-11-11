@@ -65,13 +65,8 @@ export default function MatchesPage() {
     // Subscribe to global presence to check online status
     if (matches.length === 0) return;
 
-    const presenceChannel = supabase.channel('global-presence', {
-      config: {
-        presence: {
-          key: '',
-        },
-      },
-    });
+    // Subscribe to the same global-presence channel (no config needed for listeners)
+    const presenceChannel = supabase.channel('global-presence');
 
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
