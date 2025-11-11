@@ -62,10 +62,9 @@ export default function MatchesPage() {
   }, [currentUser]);
 
   useEffect(() => {
-    // Subscribe to global presence to check online status
-    if (matches.length === 0) return;
+    // Subscribe to global presence AND track our own presence
+    if (!currentUser) return;
 
-    // Subscribe to the same global-presence channel (no config needed for listeners)
     const presenceChannel = supabase.channel('global-presence');
 
     presenceChannel
@@ -74,34 +73,34 @@ export default function MatchesPage() {
         console.log('MatchesPage - Presence state:', presenceState);
         console.log('MatchesPage - Presence keys:', Object.keys(presenceState));
 
-        // Log each presence entry
-        Object.entries(presenceState).forEach(([key, presences]) => {
-          console.log('MatchesPage - Key:', key, 'Presences:', presences);
-        });
-
         // Update online status for each match
         setMatches((prevMatches) =>
           prevMatches.map((match) => {
             const isOnline = Object.values(presenceState).some(
               (presences: any) =>
-                presences.some((p: any) => {
-                  console.log('MatchesPage - Checking presence:', p, 'against user:', match.profile.user_id);
-                  return p.user_id === match.profile.user_id;
-                })
+                presences.some((p: any) => p.user_id === match.profile.user_id)
             );
             console.log('MatchesPage - User', match.profile.name, 'online:', isOnline);
             return { ...match, isOnline };
           })
         );
       })
-      .subscribe();
-
-    console.log('Subscribed to global presence on matches page');
+      .subscribe(async (status) => {
+        console.log('MatchesPage - Subscribe status:', status);
+        if (status === 'SUBSCRIBED') {
+          // Track our own presence
+          await presenceChannel.track({
+            user_id: currentUser.id,
+            online_at: new Date().toISOString(),
+          });
+          console.log('MatchesPage - Tracking presence for:', currentUser.id);
+        }
+      });
 
     return () => {
       supabase.removeChannel(presenceChannel);
     };
-  }, [matches.length]);
+  }, [currentUser, matches.length]);
 
   const loadMatches = async () => {
     try {

@@ -97,28 +97,39 @@ export default function ChatPage() {
   }, [matchId]);
 
   useEffect(() => {
-    // Subscribe to global presence to check other user's online status
-    if (!otherProfile) return;
+    // Subscribe to global presence AND track our own presence
+    if (!currentUser || !otherProfile) return;
 
-    // Subscribe to the same global-presence channel (no config needed for listeners)
     const presenceChannel = supabase.channel('global-presence');
 
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
         const presenceState = presenceChannel.presenceState();
+        console.log('ChatPage - Presence state:', presenceState);
+
         const otherUserPresent = Object.values(presenceState).some(
           (presences: any) =>
             presences.some((p: any) => p.user_id === otherProfile.user_id)
         );
         setIsOtherUserOnline(otherUserPresent);
-        console.log('Other user online:', otherUserPresent);
+        console.log('ChatPage - Other user online:', otherUserPresent);
       })
-      .subscribe();
+      .subscribe(async (status) => {
+        console.log('ChatPage - Subscribe status:', status);
+        if (status === 'SUBSCRIBED') {
+          // Track our own presence
+          await presenceChannel.track({
+            user_id: currentUser.id,
+            online_at: new Date().toISOString(),
+          });
+          console.log('ChatPage - Tracking presence for:', currentUser.id);
+        }
+      });
 
     return () => {
       supabase.removeChannel(presenceChannel);
     };
-  }, [otherProfile]);
+  }, [currentUser, otherProfile]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
