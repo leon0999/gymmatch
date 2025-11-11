@@ -19,8 +19,14 @@ export default function GlobalPresence() {
 
       if (!user) return;
 
-      // Create global presence channel
-      channel = supabase.channel('global-presence');
+      // Create global presence channel with unique ID
+      channel = supabase.channel('global-presence', {
+        config: {
+          presence: {
+            key: user.id,
+          },
+        },
+      });
 
       // Subscribe and track presence
       channel
