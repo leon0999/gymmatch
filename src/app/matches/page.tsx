@@ -22,7 +22,6 @@ interface MatchWithProfile {
   lastMessageTime?: string;
   matchedAt: string;
   unreadCount: number;
-  isOnline?: boolean;
 }
 
 export default function MatchesPage() {
@@ -61,46 +60,6 @@ export default function MatchesPage() {
     };
   }, [currentUser]);
 
-  useEffect(() => {
-    // Subscribe to global presence AND track our own presence
-    if (!currentUser) return;
-
-    const presenceChannel = supabase.channel('global-presence');
-
-    presenceChannel
-      .on('presence', { event: 'sync' }, () => {
-        const presenceState = presenceChannel.presenceState();
-        console.log('MatchesPage - Presence state:', presenceState);
-        console.log('MatchesPage - Presence keys:', Object.keys(presenceState));
-
-        // Update online status for each match
-        setMatches((prevMatches) =>
-          prevMatches.map((match) => {
-            const isOnline = Object.values(presenceState).some(
-              (presences: any) =>
-                presences.some((p: any) => p.user_id === match.profile.user_id)
-            );
-            console.log('MatchesPage - User', match.profile.name, 'online:', isOnline);
-            return { ...match, isOnline };
-          })
-        );
-      })
-      .subscribe(async (status) => {
-        console.log('MatchesPage - Subscribe status:', status);
-        if (status === 'SUBSCRIBED') {
-          // Track our own presence
-          await presenceChannel.track({
-            user_id: currentUser.id,
-            online_at: new Date().toISOString(),
-          });
-          console.log('MatchesPage - Tracking presence for:', currentUser.id);
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(presenceChannel);
-    };
-  }, [currentUser, matches.length]);
 
   const loadMatches = async () => {
     try {
@@ -310,9 +269,6 @@ export default function MatchesPage() {
                       <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
                         {match.unreadCount > 9 ? '9+' : match.unreadCount}
                       </div>
-                    )}
-                    {match.isOnline && (
-                      <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                     )}
                   </div>
 

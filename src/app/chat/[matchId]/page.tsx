@@ -30,7 +30,6 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isOtherUserOnline, setIsOtherUserOnline] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -96,40 +95,6 @@ export default function ChatPage() {
     };
   }, [matchId]);
 
-  useEffect(() => {
-    // Subscribe to global presence AND track our own presence
-    if (!currentUser || !otherProfile) return;
-
-    const presenceChannel = supabase.channel('global-presence');
-
-    presenceChannel
-      .on('presence', { event: 'sync' }, () => {
-        const presenceState = presenceChannel.presenceState();
-        console.log('ChatPage - Presence state:', presenceState);
-
-        const otherUserPresent = Object.values(presenceState).some(
-          (presences: any) =>
-            presences.some((p: any) => p.user_id === otherProfile.user_id)
-        );
-        setIsOtherUserOnline(otherUserPresent);
-        console.log('ChatPage - Other user online:', otherUserPresent);
-      })
-      .subscribe(async (status) => {
-        console.log('ChatPage - Subscribe status:', status);
-        if (status === 'SUBSCRIBED') {
-          // Track our own presence
-          await presenceChannel.track({
-            user_id: currentUser.id,
-            online_at: new Date().toISOString(),
-          });
-          console.log('ChatPage - Tracking presence for:', currentUser.id);
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(presenceChannel);
-    };
-  }, [currentUser, otherProfile]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -356,17 +321,9 @@ export default function ChatPage() {
             </div>
 
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="font-bold text-gray-900">
-                  {otherProfile.name}, {otherProfile.age}
-                </h2>
-                {isOtherUserOnline && (
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs text-green-600 font-medium">Online</span>
-                  </div>
-                )}
-              </div>
+              <h2 className="font-bold text-gray-900">
+                {otherProfile.name}, {otherProfile.age}
+              </h2>
               <p className="text-sm text-gray-600">{otherProfile.location_name}</p>
             </div>
           </div>
