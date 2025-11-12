@@ -308,3 +308,103 @@ export interface FilterState {
   styles: WorkoutStyle[];
   minScore: number;
 }
+
+// ============================================================================
+// SOCIAL FEED TYPES (Phase 4 - MVP)
+// ============================================================================
+
+export type MediaType = 'photo' | 'video';
+export type WorkoutPart = 'chest' | 'back' | 'legs' | 'shoulders' | 'arms' | 'core' | 'cardio';
+export type StrengthLevel = 'beginner' | 'intermediate' | 'advanced';
+
+export interface Post {
+  id: string;
+  user_id: string;              // 사진 주인공
+  photographer_id: string;      // 찍어준 사람
+  match_id?: string;
+
+  media_type: MediaType;
+  media_url: string;
+  thumbnail_url?: string;       // 영상일 경우 썸네일
+
+  workout_type?: WorkoutPart;
+  exercise_name?: string;
+  caption?: string;
+
+  likes_count: number;
+  comments_count: number;
+  views_count: number;
+
+  created_at: string;
+
+  // Relations (joined data)
+  user?: {
+    name: string;
+    photo_url?: string;
+  };
+  photographer?: {
+    name: string;
+    photo_url?: string;
+  };
+}
+
+export interface PostLike {
+  post_id: string;
+  user_id: string;
+  created_at: string;
+}
+
+export interface PostComment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  comment: string;
+  created_at: string;
+
+  // Relations
+  user?: {
+    name: string;
+    photo_url?: string;
+  };
+}
+
+export type NotificationType = 'like' | 'comment' | 'new_post' | 'new_match';
+
+export interface Notification {
+  id: string;
+  user_id: string;              // 받는 사람
+  type: NotificationType;
+
+  from_user_id?: string;
+  post_id?: string;
+  comment_id?: string;
+  match_id?: string;
+
+  is_read: boolean;
+  created_at: string;
+
+  // Relations
+  from_user?: {
+    name: string;
+    photo_url?: string;
+  };
+  post?: {
+    media_url: string;
+    thumbnail_url?: string;
+  };
+  comment?: {
+    comment: string;
+  };
+}
+
+export interface WorkoutSession {
+  id: string;
+  match_id: string;
+  workout_date: string;
+  workout_parts: WorkoutPart[];
+  duration_minutes?: number;
+  media_urls?: string[];
+  status: 'scheduled' | 'in_progress' | 'completed';
+  created_at: string;
+  completed_at?: string;
+}
