@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
 import Link from 'next/link';
 import BottomNav from '@/components/BottomNav';
+import ProfilePostsGrid from '@/components/ProfilePostsGrid';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -691,6 +692,17 @@ export default function ProfilePage() {
               </>
             )}
           </div>
+        </div>
+
+        {/* Workout Photos Grid */}
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-bold text-gray-900">Workout Photos</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Photos taken by your workout partners
+            </p>
+          </div>
+          <ProfilePostsGrid userId={profile.user_id} />
         </div>
 
         {/* Danger Zone */}
