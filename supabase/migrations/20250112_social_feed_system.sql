@@ -162,6 +162,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Increment user posts count
+CREATE OR REPLACE FUNCTION increment_user_posts(user_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE profiles SET posts_count = posts_count + 1 WHERE profiles.user_id = user_id;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Increment posts count on profile
 CREATE OR REPLACE FUNCTION increment_posts_count(user_id UUID)
 RETURNS VOID AS $$
