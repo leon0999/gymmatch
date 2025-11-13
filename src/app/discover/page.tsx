@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
 import MatchModal from '@/components/MatchModal';
 import BottomNav from '@/components/BottomNav';
+import DiscoverFilters, { DiscoverFilterOptions } from '@/components/DiscoverFilters';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -34,10 +35,14 @@ export default function DiscoverPageV2() {
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [matchedUser, setMatchedUser] = useState<Profile | null>(null);
   const [newMatchId, setNewMatchId] = useState<string | null>(null);
+  const [filters, setFilters] = useState<DiscoverFilterOptions>({
+    workoutParts: [],
+    strengthLevels: [],
+  });
 
   useEffect(() => {
     loadMatches();
-  }, []);
+  }, [filters]);
 
   const loadMatches = async () => {
     try {
@@ -97,6 +102,31 @@ export default function DiscoverPageV2() {
       const filteredProfiles = unseenProfiles.filter((match) => {
         // Gender filter
         if (profile.partner_gender !== 'any' && match.gender !== profile.partner_gender) {
+          return false;
+        }
+
+        // Workout parts filter
+        if (filters.workoutParts.length > 0) {
+          const hasCommonWorkoutPart = filters.workoutParts.some(part =>
+            match.favorite_workout_parts?.includes(part)
+          );
+          if (!hasCommonWorkoutPart) {
+            return false;
+          }
+        }
+
+        // Strength level filter
+        if (filters.strengthLevels.length > 0) {
+          if (!match.strength_level || !filters.strengthLevels.includes(match.strength_level)) {
+            return false;
+          }
+        }
+
+        // Age range filter
+        if (filters.minAge && match.age < filters.minAge) {
+          return false;
+        }
+        if (filters.maxAge && match.age > filters.maxAge) {
           return false;
         }
 
@@ -413,8 +443,14 @@ export default function DiscoverPageV2() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-2xl font-bold text-gray-900">Discover</h1>
-            <div className="text-sm font-medium text-gray-600">
-              {currentIndex + 1} of {matches.length}
+            <div className="flex items-center gap-3">
+              <DiscoverFilters filters={filters} onFiltersChange={(newFilters) => {
+                setFilters(newFilters);
+                setCurrentIndex(0);
+              }} />
+              <div className="text-sm font-medium text-gray-600">
+                {currentIndex + 1} of {matches.length}
+              </div>
             </div>
           </div>
           {/* Progress Bar */}
