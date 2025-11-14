@@ -164,9 +164,9 @@ export default function MatchesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading matches...</p>
         </div>
       </div>
@@ -175,7 +175,7 @@ export default function MatchesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 max-w-md">
           <h2 className="text-xl font-bold text-red-800 mb-2">Error</h2>
           <p className="text-red-700">{error}</p>
@@ -191,7 +191,7 @@ export default function MatchesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
+    <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -203,7 +203,7 @@ export default function MatchesPage() {
           </div>
           <Link
             href="/"
-            className="text-teal-600 hover:text-teal-700 font-medium"
+            className="text-emerald-600 hover:text-emerald-700 font-medium"
           >
             ← Home
           </Link>
@@ -235,7 +235,7 @@ export default function MatchesPage() {
             </p>
             <Link
               href="/discover"
-              className="inline-block px-6 py-3 bg-teal-600 text-white font-semibold rounded-full hover:bg-teal-700 transition-colors"
+              className="inline-block px-6 py-3 bg-emerald-600 text-white font-semibold rounded-full hover:bg-emerald-700 transition-colors"
             >
               Start Swiping
             </Link>
@@ -254,7 +254,7 @@ export default function MatchesPage() {
                 <div className="flex items-center gap-4">
                   {/* Profile Picture with Badge + Online Status */}
                   <div className="relative flex-shrink-0">
-                    <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+                    <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center overflow-hidden">
                       {match.profile.photo_url ? (
                         <img
                           src={match.profile.photo_url}
@@ -295,7 +295,7 @@ export default function MatchesPage() {
                         {match.lastMessage}
                       </p>
                     ) : (
-                      <p className="text-sm text-teal-600 font-medium">
+                      <p className="text-sm text-emerald-600 font-medium">
                         💬 Start chatting!
                       </p>
                     )}

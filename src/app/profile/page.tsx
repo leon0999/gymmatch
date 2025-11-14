@@ -375,32 +375,29 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 py-4 max-w-2xl">
-        {/* Header with Settings Icon */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">{profile.name}</h1>
-          <div className="flex gap-3">
-            {!isEditing && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                aria-label="Settings"
-              >
-                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </button>
-            )}
-          </div>
+      <div className="container mx-auto px-4 py-4 max-w-2xl pb-20">
+        {/* Instagram Style Header */}
+        <div className="flex items-center justify-between mb-6 px-2">
+          <h1 className="text-xl font-semibold text-gray-900">{profile.name}</h1>
+          <button
+            onClick={() => setIsEditing(true)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Settings"
+          >
+            <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
         </div>
 
-        {/* Profile Card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
-          {/* Profile Header */}
-          <div className="h-48 bg-emerald-500 flex items-center justify-center relative">
-            <div className="text-center">
-              <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 overflow-hidden">
+        {/* Instagram Profile Section */}
+        <div className="mb-6">
+          {/* Profile Photo + Stats */}
+          <div className="flex items-center px-4 mb-4">
+            {/* Profile Photo */}
+            <div className="mr-8">
+              <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200">
                 {profile.photo_url ? (
                   <img
                     src={profile.photo_url}
@@ -408,27 +405,102 @@ export default function ProfilePage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-6xl">👤</span>
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <span className="text-4xl">👤</span>
+                  </div>
                 )}
               </div>
-              <label className="cursor-pointer inline-block px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-white text-sm font-medium transition-colors">
-                {uploading ? 'Uploading...' : 'Change Photo'}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoUpload}
-                  disabled={uploading}
-                  className="hidden"
-                />
-              </label>
+            </div>
+
+            {/* Stats */}
+            <div className="flex-1 flex justify-around">
+              <div className="text-center">
+                <div className="text-xl font-semibold text-gray-900">0</div>
+                <div className="text-sm text-gray-600">게시물</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-semibold text-gray-900">0</div>
+                <div className="text-sm text-gray-600">팔로워</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-semibold text-gray-900">0</div>
+                <div className="text-sm text-gray-600">팔로우</div>
+              </div>
             </div>
           </div>
 
-          {/* Profile Info */}
-          <div className="p-6">
-            {isEditing ? (
-              /* Edit Mode */
-              <div className="space-y-6">
+          {/* Name and Bio */}
+          <div className="px-4 mb-4">
+            <h2 className="font-semibold text-gray-900">{profile.name}</h2>
+            {profile.bio && (
+              <p className="text-sm text-gray-900 mt-1">{profile.bio}</p>
+            )}
+            {profile.gym && (
+              <p className="text-sm text-gray-600 mt-1">📍 {profile.gym}</p>
+            )}
+          </div>
+
+          {/* Edit Profile Button */}
+          {!isEditing && (
+            <div className="px-4">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="w-full px-4 py-2 bg-gray-100 text-gray-900 font-semibold rounded-lg hover:bg-gray-200 transition-colors text-sm"
+              >
+                프로필 편집
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Settings Modal */}
+        {isEditing && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                <h2 className="text-xl font-semibold text-gray-900">프로필 편집</h2>
+                <button
+                  onClick={handleCancelEdit}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  aria-label="Close"
+                >
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Photo Upload Section */}
+              <div className="p-6 border-b border-gray-200">
+                <div className="text-center">
+                  <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 overflow-hidden">
+                    {profile.photo_url ? (
+                      <img
+                        src={profile.photo_url}
+                        alt={profile.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-6xl">👤</span>
+                    )}
+                  </div>
+                  <label className="cursor-pointer inline-block px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white text-sm font-medium transition-colors">
+                    {uploading ? 'Uploading...' : 'Change Photo'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Edit Form */}
+              <div className="p-6">
+                <div className="space-y-6">
                 {/* Name and Age */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -587,167 +659,42 @@ export default function ProfilePage() {
                   >
                     Logout
                   </button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    className="w-full px-6 py-3 border-2 border-red-600 text-red-600 font-semibold rounded-lg hover:bg-red-50"
+                  >
+                    Delete Account
+                  </button>
                 </div>
               </div>
-            ) : (
-              /* View Mode */
-              <>
-                {/* Name and Basic Info */}
-                <div className="mb-6">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                    {profile.name}, {profile.age}
-                  </h2>
-                  <p className="text-gray-600">
-                    {profile.location_name}
-                    {profile.gym && ` • ${profile.gym}`}
-                  </p>
-                </div>
-
-                {/* Bio */}
-                {profile.bio && (
-                  <div className="mb-6 pb-6 border-b border-gray-200">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-2">Bio</h3>
-                    <p className="text-gray-700">{profile.bio}</p>
-                  </div>
-                )}
-
-                {/* Fitness Info */}
-                <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-gray-200">
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">Fitness Level</div>
-                    <div className="font-semibold capitalize">{profile.fitness_level}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">Gender</div>
-                    <div className="font-semibold capitalize">{profile.gender}</div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {!isEditing && (
-              <>
-                {/* Goals */}
-                {profile.fitness_goals && profile.fitness_goals.length > 0 && (
-                  <div className="mb-6 pb-6 border-b border-gray-200">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-2">Fitness Goals</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {profile.fitness_goals.map((goal, idx) => (
-                        <span
-                          key={idx}
-                          className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium capitalize"
-                        >
-                          {goal.replace('_', ' ')}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Workout Styles */}
-                {profile.workout_styles && profile.workout_styles.length > 0 && (
-                  <div className="mb-6 pb-6 border-b border-gray-200">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-2">Workout Styles</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {profile.workout_styles.map((style, idx) => (
-                        <span
-                          key={idx}
-                          className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium capitalize"
-                        >
-                          {style}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Preferences */}
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Match Preferences</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Partner Gender</span>
-                      <span className="font-medium capitalize">{profile.partner_gender}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Age Range</span>
-                      <span className="font-medium">
-                        {profile.age_range?.[0]} - {profile.age_range?.[1]}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Max Distance</span>
-                      <span className="font-medium">{profile.max_distance} miles</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Account Info */}
-                <div className="bg-gray-50 rounded-lg p-4 text-xs text-gray-500">
-                  <div className="flex justify-between mb-1">
-                    <span>Account Created</span>
-                    <span>{new Date(profile.created_at).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Premium Status</span>
-                    <span className={profile.is_premium ? 'text-emerald-600 font-semibold' : ''}>
-                      {profile.is_premium ? '✓ Active' : 'Free'}
-                    </span>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Workout Photos Grid */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Workout Photos</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Photos taken by your workout partners
-            </p>
-          </div>
-          <ProfilePostsGrid userId={profile.user_id} />
-        </div>
-
-        {/* Danger Zone */}
-        <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 mb-6">
-          <div className="flex items-start gap-3 mb-4">
-            <svg className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <div>
-              <h3 className="text-lg font-bold text-red-900 mb-1">Danger Zone</h3>
-              <p className="text-sm text-red-700">
-                Deleting your account is permanent and cannot be undone. All your data, matches, and messages will be permanently deleted.
-              </p>
+            </div>
             </div>
           </div>
-          <button
-            onClick={handleDeleteAccount}
-            disabled={loading}
-            className="w-full px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? 'Deleting...' : 'Delete My Account'}
-          </button>
-        </div>
+        )}
 
-        {/* Navigation */}
-        <div className="flex gap-3">
-          <Link
-            href="/"
-            className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-full hover:bg-gray-300 text-center"
-          >
-            Home
-          </Link>
-          <Link
-            href="/discover"
-            className="flex-1 px-6 py-3 bg-emerald-600 text-white font-semibold rounded-full hover:bg-emerald-700 text-center"
-          >
-            Discover
-          </Link>
-        </div>
+        {/* Tabs and Photo Grid */}
+        <div className="border-t border-gray-200">
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200">
+            <button className="flex-1 py-3 text-gray-900 border-b-2 border-gray-900">
+              <svg className="w-6 h-6 mx-auto" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M4 4h7V11H4zm0 9h7v7H4zm9-9h7V11h-7zm0 9h7v7h-7z" />
+              </svg>
+            </button>
+            <button className="flex-1 py-3 text-gray-400">
+              <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            </button>
+            <button className="flex-1 py-3 text-gray-400">
+              <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Photo Grid */}
+          <ProfilePostsGrid userId={profile.user_id} />
       </div>
 
       {/* Bottom Navigation */}
