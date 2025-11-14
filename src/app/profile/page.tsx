@@ -695,6 +695,7 @@ export default function ProfilePage() {
 
           {/* Photo Grid */}
           <ProfilePostsGrid userId={profile.user_id} />
+        </div>
       </div>
 
       {/* Bottom Navigation */}

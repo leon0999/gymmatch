@@ -8,10 +8,10 @@ import { supabase } from '@/lib/supabase';
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { postId: string; commentId: string } }
+  { params }: { params: Promise<{ postId: string; commentId: string }> }
 ) {
   try {
-    const { commentId } = params;
+    const { commentId } = await params;
 
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();

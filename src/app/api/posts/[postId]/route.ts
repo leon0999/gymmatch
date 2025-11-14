@@ -8,10 +8,10 @@ import { supabase } from '@/lib/supabase';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
-    const { postId } = params;
+    const { postId } = await params;
 
     const { data: post, error } = await supabase
       .from('posts')
@@ -56,10 +56,10 @@ export async function GET(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
-    const { postId } = params;
+    const { postId } = await params;
 
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();

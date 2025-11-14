@@ -8,10 +8,10 @@ import { supabase } from '@/lib/supabase';
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { notificationId: string } }
+  { params }: { params: Promise<{ notificationId: string }> }
 ) {
   try {
-    const { notificationId } = params;
+    const { notificationId } = await params;
 
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();

@@ -8,10 +8,10 @@ import { supabase } from '@/lib/supabase';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
-    const { postId } = params;
+    const { postId } = await params;
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '0');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -57,10 +57,10 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
-    const { postId } = params;
+    const { postId } = await params;
     const { comment } = await request.json();
 
     if (!comment || !comment.trim()) {

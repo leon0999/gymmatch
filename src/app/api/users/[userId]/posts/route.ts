@@ -8,7 +8,7 @@ import { createClient } from '@supabase/supabase-js';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     // Create Supabase client (no auth required for viewing posts)
@@ -17,7 +17,7 @@ export async function GET(
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    const { userId } = params;
+    const { userId } = await params;
     const searchParams = request.nextUrl.searchParams;
     const limit = parseInt(searchParams.get('limit') || '30');
 
