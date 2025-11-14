@@ -8,35 +8,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Home, Search, MessageSquare, Bell, User } from 'lucide-react';
+import { Home, Search, MessageSquare, User } from 'lucide-react';
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  useEffect(() => {
-    loadUnreadCount();
-    const interval = setInterval(loadUnreadCount, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadUnreadCount = async () => {
-    try {
-      const res = await fetch('/api/notifications/unread-count');
-      const data = await res.json();
-      if (data.success) {
-        setUnreadCount(data.data.unreadCount);
-      }
-    } catch (error) {
-      console.error('Failed to load unread count:', error);
-    }
-  };
 
   const navItems = [
     {
-      href: '/',
-      label: 'Home',
+      href: '/feed',
+      label: 'Feed',
       icon: Home,
     },
     {
@@ -48,12 +28,6 @@ export default function BottomNav() {
       href: '/matches',
       label: 'Matches',
       icon: MessageSquare,
-    },
-    {
-      href: '/notifications',
-      label: 'Notifications',
-      icon: Bell,
-      badge: unreadCount,
     },
     {
       href: '/profile',

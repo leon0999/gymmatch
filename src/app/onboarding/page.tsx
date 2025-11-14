@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation';
 import { POPULAR_GYMS, FITNESS_LEVELS, FITNESS_GOALS, WORKOUT_STYLES } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
 
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
 interface OnboardingData {
   // Step 0: Account Creation
@@ -36,14 +36,24 @@ interface OnboardingData {
   goals: string[];
   workoutStyles: string[];
 
-  // Step 3: Schedule (simplified for MVP)
+  // Step 3: Workout Details (NEW - 운동 세부 정보)
+  todayWorkoutPart: string;
+  mainExercises: string[];
+  benchPress1RM: number | null;
+  squat1RM: number | null;
+  deadlift1RM: number | null;
+  workoutTimePreference: string;
+  currentGoal: string;
+  workoutExperienceMonths: number | null;
+
+  // Step 4: Schedule (simplified for MVP)
   workoutDays: string[];
   preferredTime: string;
 
-  // Step 4: Photos & Bio
+  // Step 5: Photos & Bio
   bio: string;
 
-  // Step 5: Preferences
+  // Step 6: Preferences
   partnerGender: 'same' | 'any' | 'opposite' | '';
   ageRangeMin: number;
   ageRangeMax: number;
@@ -67,6 +77,16 @@ export default function OnboardingPage() {
     fitnessLevel: '',
     goals: [],
     workoutStyles: [],
+    // NEW: Workout Details
+    todayWorkoutPart: '',
+    mainExercises: [],
+    benchPress1RM: null,
+    squat1RM: null,
+    deadlift1RM: null,
+    workoutTimePreference: '',
+    currentGoal: '',
+    workoutExperienceMonths: null,
+    // Schedule
     workoutDays: [],
     preferredTime: '',
     bio: '',
@@ -106,11 +126,11 @@ export default function OnboardingPage() {
     setCurrentUser(user);
   };
 
-  const totalSteps = 5;
+  const totalSteps = 6;
   const progress = (currentStep / totalSteps) * 100;
 
   const handleNext = () => {
-    if (currentStep < 5) {
+    if (currentStep < 6) {
       setCurrentStep((currentStep + 1) as Step);
     }
   };
@@ -179,23 +199,31 @@ export default function OnboardingPage() {
         .from('profiles')
         .insert({
           user_id: currentUser.id,
+          email: currentUser.email,
           name: formData.name,
           age: formData.age,
           gender: formData.gender,
           bio: formData.bio || `Looking for a dedicated gym partner to train together ${formData.workoutDays.length || 3}x per week. Let's motivate each other and reach our fitness goals!`,
-          location: `POINT(${coords.lng} ${coords.lat})`, // PostGIS format
-          location_name: formData.location, // ✅ 추가
-          gym: formData.gym || null,
+          location: formData.location,
+          gym_name: formData.gym || null,
           fitness_level: formData.fitnessLevel,
           fitness_goals: formData.goals,
           workout_styles: formData.workoutStyles,
-          schedule: scheduleData,
-          partner_gender: formData.partnerGender || 'any', // ✅ 필드명 수정
-          age_range: [formData.ageRangeMin, formData.ageRangeMax], // ✅ 배열로 수정
-          max_distance: formData.maxDistance,
-          level_match: 'any', // ✅ 추가 (기본값 'any')
-          is_premium: false,
-          photos: [],
+          // NEW: Workout Details
+          today_workout_part: formData.todayWorkoutPart || null,
+          main_exercises: formData.mainExercises,
+          bench_press_1rm: formData.benchPress1RM,
+          squat_1rm: formData.squat1RM,
+          deadlift_1rm: formData.deadlift1RM,
+          workout_time_preference: formData.workoutTimePreference || null,
+          current_goal: formData.currentGoal || null,
+          workout_experience_months: formData.workoutExperienceMonths,
+          // Preferences
+          preferred_gender: formData.partnerGender || 'any',
+          preferred_age_min: formData.ageRangeMin,
+          preferred_age_max: formData.ageRangeMax,
+          preferred_distance_km: formData.maxDistance,
+          onboarding_completed: true,
         });
 
       if (profileError) {
@@ -205,9 +233,9 @@ export default function OnboardingPage() {
 
       console.log('✅ Profile created successfully!');
 
-      // Step 4: Redirect to discover page
-      console.log('🔄 Redirecting to /discover...');
-      router.push('/discover');
+      // Step 4: Redirect to feed page
+      console.log('🔄 Redirecting to /feed...');
+      router.push('/feed');
     } catch (err: any) {
       console.error('Onboarding error:', err);
       setError(err.message || 'Something went wrong. Please try again.');
@@ -452,8 +480,166 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 3: Schedule (Simplified) */}
+          {/* Step 3: Workout Details - 헬스인들이 중요하게 생각하는 정보 */}
           {currentStep === 3 && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                💪 Your Workout Details
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Let's get specific - this helps you find the perfect training partner!
+              </p>
+
+              <div className="space-y-6">
+                {/* 오늘 운동할 부위 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    What are you training today?
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {['chest', 'back', 'legs', 'shoulders', 'arms', 'core', 'cardio', 'rest'].map((part) => (
+                      <button
+                        key={part}
+                        onClick={() => updateField('todayWorkoutPart', part)}
+                        className={`px-3 py-2 rounded-lg border-2 font-medium transition-colors capitalize ${
+                          formData.todayWorkoutPart === part
+                            ? 'border-teal-600 bg-teal-50 text-teal-700'
+                            : 'border-gray-300 bg-white text-gray-700 hover:border-teal-300'
+                        }`}
+                      >
+                        {part}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 현재 목표 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Current Goal
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { key: 'bulk', label: '💪 Bulk', desc: 'Muscle gain' },
+                      { key: 'cut', label: '🔥 Cut', desc: 'Fat loss' },
+                      { key: 'maintain', label: '⚖️ Maintain', desc: 'Stay fit' },
+                      { key: 'strength', label: '🏋️ Strength', desc: 'Get stronger' },
+                      { key: 'endurance', label: '🏃 Endurance', desc: 'Stamina' },
+                      { key: 'beginner_gains', label: '🌱 Beginner', desc: 'Just starting' },
+                    ].map((goal) => (
+                      <button
+                        key={goal.key}
+                        onClick={() => updateField('currentGoal', goal.key)}
+                        className={`px-4 py-3 rounded-lg border-2 transition-colors text-left ${
+                          formData.currentGoal === goal.key
+                            ? 'border-teal-600 bg-teal-50'
+                            : 'border-gray-300 bg-white hover:border-teal-300'
+                        }`}
+                      >
+                        <div className={`font-semibold mb-1 ${
+                          formData.currentGoal === goal.key ? 'text-teal-700' : 'text-gray-900'
+                        }`}>
+                          {goal.label}
+                        </div>
+                        <div className="text-xs text-gray-500">{goal.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3대 운동 1RM */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Big 3 Lifts (1RM in kg) - Optional
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Bench Press</label>
+                      <input
+                        type="number"
+                        value={formData.benchPress1RM || ''}
+                        onChange={(e) => updateField('benchPress1RM', parseInt(e.target.value) || null)}
+                        placeholder="100"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 text-gray-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Squat</label>
+                      <input
+                        type="number"
+                        value={formData.squat1RM || ''}
+                        onChange={(e) => updateField('squat1RM', parseInt(e.target.value) || null)}
+                        placeholder="120"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 text-gray-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Deadlift</label>
+                      <input
+                        type="number"
+                        value={formData.deadlift1RM || ''}
+                        onChange={(e) => updateField('deadlift1RM', parseInt(e.target.value) || null)}
+                        placeholder="140"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 text-gray-900"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Help partners match your strength level
+                  </p>
+                </div>
+
+                {/* 선호 운동 시간대 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Preferred Workout Time
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { key: 'early_morning', label: '🌅 Early (5-8am)' },
+                      { key: 'morning', label: '☀️ Morning (8-12pm)' },
+                      { key: 'afternoon', label: '🌤️ Afternoon (12-5pm)' },
+                      { key: 'evening', label: '🌆 Evening (5-8pm)' },
+                      { key: 'night', label: '🌙 Night (8-11pm)' },
+                      { key: 'flexible', label: '🔄 Flexible' },
+                    ].map((time) => (
+                      <button
+                        key={time.key}
+                        onClick={() => updateField('workoutTimePreference', time.key)}
+                        className={`px-3 py-2 rounded-lg border-2 font-medium transition-colors text-sm ${
+                          formData.workoutTimePreference === time.key
+                            ? 'border-teal-600 bg-teal-50 text-teal-700'
+                            : 'border-gray-300 bg-white text-gray-700 hover:border-teal-300'
+                        }`}
+                      >
+                        {time.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 운동 경력 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    How long have you been working out?
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.workoutExperienceMonths || ''}
+                    onChange={(e) => updateField('workoutExperienceMonths', parseInt(e.target.value) || null)}
+                    placeholder="e.g., 24 (months)"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 text-gray-900"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    This helps us match you with partners at similar levels
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Schedule (Simplified) */}
+          {currentStep === 4 && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
                 When do you usually work out?
@@ -512,8 +698,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 4: Bio */}
-          {currentStep === 4 && (
+          {/* Step 5: Bio */}
+          {currentStep === 5 && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
                 Tell potential partners about yourself
@@ -547,8 +733,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 5: Preferences */}
-          {currentStep === 5 && (
+          {/* Step 6: Preferences */}
+          {currentStep === 6 && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
                 Who are you looking to match with?
@@ -645,7 +831,7 @@ export default function OnboardingPage() {
             <div />
           )}
 
-          {currentStep < 5 ? (
+          {currentStep < 6 ? (
             <button
               onClick={handleNext}
               className="px-8 py-3 bg-teal-600 text-white font-semibold rounded-full hover:bg-teal-700 transition-colors shadow-lg"

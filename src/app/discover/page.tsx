@@ -3,14 +3,15 @@
 /**
  * GymMatch - Discover Page (MVP Version)
  *
- * Simple matching interface with:
- * - List of potential matches
- * - Match scores
- * - Like/Pass buttons
+ * Sexy swipeable matching interface with:
+ * - Smooth swipe animations (Framer Motion)
+ * - Instagram story style cards
+ * - Workout-specific information
  */
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
 import MatchModal from '@/components/MatchModal';
@@ -71,37 +72,43 @@ export default function DiscoverPageV2() {
 
       setCurrentUser(profile);
 
-      // Get users already swiped
-      const { data: swipedUsers } = await supabase
-        .from('swipes')
-        .select('target_user_id')
-        .eq('user_id', user.id);
+      // Get users already liked or passed
+      const { data: likedUsers } = await supabase
+        .from('likes')
+        .select('to_user_id')
+        .eq('from_user_id', user.id);
 
-      const swipedUserIds = new Set(
-        (swipedUsers || []).map((s) => s.target_user_id)
+      const likedUserIds = new Set(
+        (likedUsers || []).map((s) => s.to_user_id)
       );
 
-      // Get all other profiles (excluding self and already swiped)
+      // Get all other profiles (excluding self and already liked)
       const { data: allProfiles, error: matchError } = await supabase
         .from('profiles')
         .select('*')
         .neq('user_id', user.id)
         .limit(50);
 
+      console.log('🔍 All profiles:', allProfiles?.length);
+
       if (matchError) {
+        console.error('❌ Match error:', matchError);
         setError('Could not load matches');
         return;
       }
 
-      // Filter out already swiped users
+      // Filter out already liked users
       const unseenProfiles = (allProfiles || []).filter(
-        (p) => !swipedUserIds.has(p.user_id)
+        (p) => !likedUserIds.has(p.user_id)
       );
+
+      console.log('🔍 Unseen profiles (not liked yet):', unseenProfiles.length);
 
       // Apply preference filters
       const filteredProfiles = unseenProfiles.filter((match) => {
-        // Gender filter
-        if (profile.partner_gender !== 'any' && match.gender !== profile.partner_gender) {
+        // Gender filter (use preferred_gender, not partner_gender)
+        if (profile.preferred_gender && profile.preferred_gender !== 'any' && match.gender !== profile.preferred_gender) {
+          console.log(`❌ Gender filter: ${match.name} (${match.gender}) doesn't match ${profile.preferred_gender}`);
           return false;
         }
 
@@ -149,6 +156,12 @@ export default function DiscoverPageV2() {
         return true;
       });
 
+      console.log('🔍 Filtered profiles (after preference filters):', filteredProfiles.length);
+
+      if (filteredProfiles.length === 0) {
+        console.warn('⚠️ No profiles match your preferences!');
+      }
+
       // Calculate match scores (improved algorithm)
       const scored = filteredProfiles.map((match) => ({
         ...match,
@@ -160,6 +173,7 @@ export default function DiscoverPageV2() {
       // Sort by score
       scored.sort((a, b) => b.matchScore - a.matchScore);
 
+      console.log('✅ Final matches:', scored.length);
       setMatches(scored);
     } catch (err: any) {
       console.error('Error loading matches:', err);
@@ -279,11 +293,10 @@ export default function DiscoverPageV2() {
     const match = matches[currentIndex];
 
     try {
-      // Record swipe in database
-      const { error } = await supabase.from('swipes').insert({
-        user_id: currentUser.user_id,
-        target_user_id: match.user_id,
-        action: 'like',
+      // Record like in database
+      const { error } = await supabase.from('likes').insert({
+        from_user_id: currentUser.user_id,
+        to_user_id: match.user_id,
       });
 
       if (error) {
@@ -308,18 +321,8 @@ export default function DiscoverPageV2() {
     const match = matches[currentIndex];
 
     try {
-      // Record swipe in database
-      const { error } = await supabase.from('swipes').insert({
-        user_id: currentUser.user_id,
-        target_user_id: match.user_id,
-        action: 'pass',
-      });
-
-      if (error) {
-        console.error('Error recording pass:', error);
-      } else {
-        console.log('❌ Passed:', match.name);
-      }
+      // Just skip - no database record for passes
+      console.log('❌ Passed:', match.name);
     } catch (err) {
       console.error('Error in handlePass:', err);
     }
@@ -328,22 +331,41 @@ export default function DiscoverPageV2() {
     setCurrentIndex(currentIndex + 1);
   };
 
+  // Swipe animation logic
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 0, 200], [-25, 0, 25]);
+  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
+
+  const handleDragEnd = (_: any, info: any) => {
+    const swipeThreshold = 100;
+
+    if (info.offset.x > swipeThreshold) {
+      // Swiped right - Like
+      handleLike();
+    } else if (info.offset.x < -swipeThreshold) {
+      // Swiped left - Pass
+      handlePass();
+    }
+  };
+
   const checkMutualMatch = async (userId: string, targetUserId: string) => {
     try {
       // Check if target user also liked current user
       const { data: mutualLike } = await supabase
-        .from('swipes')
+        .from('likes')
         .select('*')
-        .eq('user_id', targetUserId)
-        .eq('target_user_id', userId)
-        .eq('action', 'like')
+        .eq('from_user_id', targetUserId)
+        .eq('to_user_id', userId)
         .single();
 
       if (mutualLike) {
-        // Create mutual match
+        // Create mutual match (ensure user1_id < user2_id)
+        const user1_id = userId < targetUserId ? userId : targetUserId;
+        const user2_id = userId < targetUserId ? targetUserId : userId;
+
         const { data: newMatch, error } = await supabase.from('matches').insert({
-          user1_id: userId,
-          user2_id: targetUserId,
+          user1_id,
+          user2_id,
         }).select().single();
 
         if (!error && newMatch) {
@@ -462,10 +484,49 @@ export default function DiscoverPageV2() {
           </div>
         </div>
 
-        {/* Match Card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
-          {/* Profile Image */}
-          <div className="h-96 bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center overflow-hidden relative">
+        {/* Match Card - Sexy Instagram Story Style with Swipe */}
+        <motion.div
+          className="relative rounded-3xl shadow-2xl overflow-hidden mb-6 cursor-grab active:cursor-grabbing"
+          style={{
+            height: '75vh',
+            maxHeight: '650px',
+            x,
+            rotate,
+            opacity,
+          }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          onDragEnd={handleDragEnd}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        >
+          {/* Swipe Indicators */}
+          <motion.div
+            className="absolute top-10 left-10 z-20 pointer-events-none"
+            style={{
+              opacity: useTransform(x, [0, 100], [0, 1]),
+              scale: useTransform(x, [0, 100], [0.8, 1.2]),
+            }}
+          >
+            <div className="px-6 py-4 bg-green-500 border-4 border-white rounded-2xl shadow-2xl transform rotate-12">
+              <span className="text-white text-4xl font-black">LIKE</span>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="absolute top-10 right-10 z-20 pointer-events-none"
+            style={{
+              opacity: useTransform(x, [-100, 0], [1, 0]),
+              scale: useTransform(x, [-100, 0], [1.2, 0.8]),
+            }}
+          >
+            <div className="px-6 py-4 bg-red-500 border-4 border-white rounded-2xl shadow-2xl transform -rotate-12">
+              <span className="text-white text-4xl font-black">NOPE</span>
+            </div>
+          </motion.div>
+
+          {/* Background Image */}
+          <div className="absolute inset-0 bg-gradient-to-br from-teal-400 to-blue-500">
             {currentMatch.photo_url ? (
               <img
                 src={currentMatch.photo_url}
@@ -473,98 +534,163 @@ export default function DiscoverPageV2() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="text-center">
-                <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-6xl">👤</span>
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="w-40 h-40 bg-white/20 rounded-full flex items-center justify-center">
+                  <span className="text-8xl">👤</span>
                 </div>
-                <p className="text-white text-sm opacity-75">Photo coming soon</p>
               </div>
             )}
           </div>
 
-          {/* Profile Info */}
-          <div className="p-6">
-            {/* Name and Match Score */}
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900">
-                  {currentMatch.name}, {currentMatch.age}
-                </h2>
-                <p className="text-gray-600 mt-1">
-                  {currentMatch.location_name}
-                  {currentMatch.distance && ` • ${currentMatch.distance} miles away`}
-                </p>
+          {/* Gradient Overlay for readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
+
+          {/* Top Info - Match Score */}
+          <div className="absolute top-6 right-6 z-10">
+            <div className={`px-4 py-2 rounded-full backdrop-blur-md bg-white/20 border-2 ${
+              currentMatch.matchScore >= 80 ? 'border-green-400' :
+              currentMatch.matchScore >= 60 ? 'border-blue-400' :
+              'border-yellow-400'
+            }`}>
+              <div className="text-white text-2xl font-bold">
+                {currentMatch.matchScore}%
               </div>
-              <div className="text-center">
-                <div className={`text-3xl font-bold ${
-                  currentMatch.matchScore >= 80 ? 'text-green-600' :
-                  currentMatch.matchScore >= 60 ? 'text-blue-600' :
-                  'text-yellow-600'
-                }`}>
-                  {currentMatch.matchScore}%
+            </div>
+          </div>
+
+          {/* Today's Workout Part - BIG BADGE */}
+          {currentMatch.today_workout_part && (
+            <div className="absolute top-6 left-6 z-10">
+              <div className="px-5 py-3 rounded-full backdrop-blur-md bg-teal-500/90 border-2 border-white/50 shadow-xl">
+                <div className="text-white font-bold text-lg capitalize flex items-center gap-2">
+                  <span className="text-2xl">
+                    {currentMatch.today_workout_part === 'chest' && '💪'}
+                    {currentMatch.today_workout_part === 'back' && '🦸'}
+                    {currentMatch.today_workout_part === 'legs' && '🦵'}
+                    {currentMatch.today_workout_part === 'shoulders' && '🤸'}
+                    {currentMatch.today_workout_part === 'arms' && '💪'}
+                    {currentMatch.today_workout_part === 'core' && '🧘'}
+                    {currentMatch.today_workout_part === 'cardio' && '🏃'}
+                    {currentMatch.today_workout_part === 'rest' && '😴'}
+                  </span>
+                  {currentMatch.today_workout_part}
                 </div>
-                <div className="text-xs text-gray-500">Match</div>
+              </div>
+            </div>
+          )}
+
+          {/* Bottom Info */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
+            {/* Name and Age */}
+            <div className="mb-4">
+              <h2 className="text-4xl font-black text-white drop-shadow-lg mb-2">
+                {currentMatch.name}, {currentMatch.age}
+              </h2>
+              <div className="flex items-center gap-3 text-white/90 text-sm">
+                <span className="flex items-center gap-1">
+                  📍 {currentMatch.location_name}
+                </span>
+                {currentMatch.distance && (
+                  <span className="flex items-center gap-1">
+                    🚶 {currentMatch.distance} miles
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Workout Stats - 3 Big Lifts */}
+            {(currentMatch.bench_press_1rm || currentMatch.squat_1rm || currentMatch.deadlift_1rm) && (
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                {currentMatch.bench_press_1rm && (
+                  <div className="backdrop-blur-md bg-white/10 rounded-xl p-3 border border-white/20 text-center">
+                    <div className="text-2xl mb-1">🏋️</div>
+                    <div className="text-white font-bold text-lg">{currentMatch.bench_press_1rm}kg</div>
+                    <div className="text-white/70 text-xs">Bench</div>
+                  </div>
+                )}
+                {currentMatch.squat_1rm && (
+                  <div className="backdrop-blur-md bg-white/10 rounded-xl p-3 border border-white/20 text-center">
+                    <div className="text-2xl mb-1">🦵</div>
+                    <div className="text-white font-bold text-lg">{currentMatch.squat_1rm}kg</div>
+                    <div className="text-white/70 text-xs">Squat</div>
+                  </div>
+                )}
+                {currentMatch.deadlift_1rm && (
+                  <div className="backdrop-blur-md bg-white/10 rounded-xl p-3 border border-white/20 text-center">
+                    <div className="text-2xl mb-1">💪</div>
+                    <div className="text-white font-bold text-lg">{currentMatch.deadlift_1rm}kg</div>
+                    <div className="text-white/70 text-xs">Deadlift</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Workout Details Row */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {/* Current Goal */}
+              {currentMatch.current_goal && (
+                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
+                  <span>
+                    {currentMatch.current_goal === 'bulk' && '💪'}
+                    {currentMatch.current_goal === 'cut' && '🔥'}
+                    {currentMatch.current_goal === 'maintain' && '⚖️'}
+                    {currentMatch.current_goal === 'strength' && '🏋️'}
+                    {currentMatch.current_goal === 'endurance' && '🏃'}
+                    {currentMatch.current_goal === 'beginner_gains' && '🌱'}
+                  </span>
+                  <span className="capitalize">{currentMatch.current_goal.replace('_', ' ')}</span>
+                </div>
+              )}
+
+              {/* Workout Time */}
+              {currentMatch.workout_time_preference && (
+                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
+                  <span>🕐</span>
+                  <span className="capitalize">{currentMatch.workout_time_preference.replace('_', ' ')}</span>
+                </div>
+              )}
+
+              {/* Experience */}
+              {currentMatch.workout_experience_months && (
+                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
+                  <span>📅</span>
+                  <span>{Math.floor(currentMatch.workout_experience_months / 12)}y {currentMatch.workout_experience_months % 12}m</span>
+                </div>
+              )}
+
+              {/* Fitness Level */}
+              <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
+                <span>
+                  {currentMatch.fitness_level === 'beginner' && '🌱'}
+                  {currentMatch.fitness_level === 'intermediate' && '💪'}
+                  {currentMatch.fitness_level === 'advanced' && '🏆'}
+                </span>
+                <span className="capitalize">{currentMatch.fitness_level}</span>
               </div>
             </div>
 
             {/* Bio */}
             {currentMatch.bio && (
-              <p className="text-gray-700 mb-4">{currentMatch.bio}</p>
+              <p className="text-white/90 text-sm leading-relaxed mb-3 line-clamp-2">
+                {currentMatch.bio}
+              </p>
             )}
 
             {/* Match Reasons */}
             {currentMatch.matchReasons.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {currentMatch.matchReasons.map((reason, idx) => (
+              <div className="flex flex-wrap gap-2">
+                {currentMatch.matchReasons.slice(0, 3).map((reason, idx) => (
                   <span
                     key={idx}
-                    className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm"
+                    className="px-3 py-1 backdrop-blur-md bg-teal-500/80 rounded-full text-white text-xs font-medium border border-white/30"
                   >
                     {reason}
                   </span>
                 ))}
               </div>
             )}
-
-            {/* Details */}
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Fitness Level</div>
-                <div className="font-semibold capitalize">{currentMatch.fitness_level}</div>
-              </div>
-              {currentMatch.gym && (
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">Gym</div>
-                  <div className="font-semibold">{currentMatch.gym}</div>
-                </div>
-              )}
-              {currentMatch.fitness_goals && currentMatch.fitness_goals.length > 0 && (
-                <div className="col-span-2">
-                  <div className="text-xs text-gray-500 mb-1">Goals</div>
-                  <div className="flex flex-wrap gap-2">
-                    {currentMatch.fitness_goals.map((goal, idx) => (
-                      <span key={idx} className="px-2 py-1 bg-gray-100 rounded text-sm capitalize">
-                        {goal.replace('_', ' ')}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {currentMatch.workout_styles && currentMatch.workout_styles.length > 0 && (
-                <div className="col-span-2">
-                  <div className="text-xs text-gray-500 mb-1">Workout Styles</div>
-                  <div className="flex flex-wrap gap-2">
-                    {currentMatch.workout_styles.map((style, idx) => (
-                      <span key={idx} className="px-2 py-1 bg-gray-100 rounded text-sm capitalize">
-                        {style}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Action Buttons */}
         <div className="flex gap-6 justify-center items-center">

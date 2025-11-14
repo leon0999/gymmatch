@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * GET /api/users/[userId]/posts
@@ -11,6 +11,12 @@ export async function GET(
   { params }: { params: { userId: string } }
 ) {
   try {
+    // Create Supabase client (no auth required for viewing posts)
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
     const { userId } = params;
     const searchParams = request.nextUrl.searchParams;
     const limit = parseInt(searchParams.get('limit') || '30');
@@ -18,11 +24,7 @@ export async function GET(
     // Get user's posts (where they are the subject of the photo)
     const { data: posts, error } = await supabase
       .from('posts')
-      .select(`
-        *,
-        user:profiles!posts_user_id_fkey(name, photo_url),
-        photographer:profiles!posts_photographer_id_fkey(name, photo_url)
-      `)
+      .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(limit);

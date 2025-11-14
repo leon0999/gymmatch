@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Dumbbell } from 'lucide-react';
 import { Post } from '@/lib/types';
 import PostCard from '@/components/PostCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -84,54 +86,101 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-        <div className="max-w-2xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">Feed</h1>
+      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-lg border-b border-gray-200/50">
+        <div className="max-w-2xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Dumbbell className="w-7 h-7 text-teal-500" />
+              <h1 className="text-2xl font-black bg-gradient-to-r from-teal-500 to-blue-500 bg-clip-text text-transparent">
+                GymMatch
+              </h1>
+            </div>
+            <div className="text-sm font-medium text-gray-600">
+              {posts.length} posts
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Feed Content */}
       <div className="max-w-2xl mx-auto">
         {posts.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg mb-4">No posts yet</p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center py-20"
+          >
+            <Dumbbell className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <p className="text-gray-600 text-xl font-semibold mb-2">No posts yet</p>
             <p className="text-gray-400 text-sm">
               Start matching with partners and share workout photos!
             </p>
-          </div>
+          </motion.div>
         ) : (
           <div className="space-y-0">
-            {posts.map((post) => (
-              <PostCard
+            {posts.map((post, index) => (
+              <motion.div
                 key={post.id}
-                post={post}
-                onLikeChange={handleLikeChange}
-                onCommentChange={handleCommentChange}
-                onDelete={handleDeletePost}
-              />
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.4,
+                  delay: index * 0.05,
+                  ease: [0.25, 0.1, 0.25, 1],
+                }}
+              >
+                <PostCard
+                  post={post}
+                  onLikeChange={handleLikeChange}
+                  onCommentChange={handleCommentChange}
+                  onDelete={handleDeletePost}
+                />
+              </motion.div>
             ))}
           </div>
         )}
 
         {/* Load More Button */}
         {hasMore && (
-          <div className="py-8 text-center">
-            <button
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="py-8 text-center"
+          >
+            <motion.button
               onClick={loadMore}
               disabled={loadingMore}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-8 py-3 bg-gradient-to-r from-teal-500 to-blue-500 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loadingMore ? 'Loading...' : 'Load More'}
-            </button>
-          </div>
+              {loadingMore ? (
+                <span className="flex items-center space-x-2">
+                  <LoadingSpinner />
+                  <span>Loading...</span>
+                </span>
+              ) : (
+                'Load More'
+              )}
+            </motion.button>
+          </motion.div>
         )}
 
         {!hasMore && posts.length > 0 && (
-          <div className="py-8 text-center text-gray-500">
-            You've reached the end
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="py-12 text-center"
+          >
+            <div className="inline-flex items-center space-x-2 text-gray-400 text-sm">
+              <div className="h-px w-12 bg-gray-300"></div>
+              <span>You're all caught up</span>
+              <div className="h-px w-12 bg-gray-300"></div>
+            </div>
+          </motion.div>
         )}
       </div>
     </div>

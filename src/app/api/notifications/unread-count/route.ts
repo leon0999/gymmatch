@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
 
 /**
  * GET /api/notifications/unread-count
@@ -8,9 +9,26 @@ import { supabase } from '@/lib/supabase';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Create server-side Supabase client with cookies
+    const cookieStore = await cookies();
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          persistSession: false,
+        },
+        global: {
+          headers: {
+            Authorization: request.headers.get('Authorization') || '',
+          },
+        },
+      }
+    );
+
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }

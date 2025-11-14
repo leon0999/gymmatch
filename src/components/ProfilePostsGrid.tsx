@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { Post } from '@/lib/types';
-import { Heart, MessageCircle, Play } from 'lucide-react';
+import { Heart, MessageCircle, Play, Dumbbell } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner';
 
 interface ProfilePostsGridProps {
@@ -45,24 +46,39 @@ export default function ProfilePostsGrid({ userId }: ProfilePostsGridProps) {
 
   if (posts.length === 0) {
     return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg">
-        <p className="text-gray-500 text-lg mb-2">No workout photos yet</p>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="text-center py-16"
+      >
+        <Dumbbell className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+        <p className="text-gray-600 text-lg font-semibold mb-2">No workout photos yet</p>
         <p className="text-gray-400 text-sm">
           Start matching with partners to share workout photos!
         </p>
-      </div>
+      </motion.div>
     );
   }
 
   return (
     <>
       {/* Posts Grid */}
-      <div className="grid grid-cols-3 gap-1">
-        {posts.map((post) => (
-          <button
+      <div className="grid grid-cols-3 gap-1 p-1">
+        {posts.map((post, index) => (
+          <motion.button
             key={post.id}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+              duration: 0.3,
+              delay: index * 0.03,
+              ease: [0.25, 0.1, 0.25, 1],
+            }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setSelectedPost(post)}
-            className="relative aspect-square bg-gray-200 overflow-hidden group cursor-pointer"
+            className="relative aspect-square bg-gray-200 overflow-hidden group cursor-pointer rounded-sm"
           >
             {/* Thumbnail */}
             <Image
@@ -80,30 +96,47 @@ export default function ProfilePostsGrid({ userId }: ProfilePostsGridProps) {
             )}
 
             {/* Hover Overlay */}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-4">
-              <div className="flex items-center text-white">
-                <Heart className="w-5 h-5 mr-1 fill-white" />
-                <span className="font-semibold">{post.likes_count}</span>
-              </div>
-              <div className="flex items-center text-white">
-                <MessageCircle className="w-5 h-5 mr-1 fill-white" />
-                <span className="font-semibold">{post.comments_count}</span>
-              </div>
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center space-x-6">
+              <motion.div
+                initial={{ y: 10 }}
+                whileHover={{ y: 0 }}
+                className="flex items-center text-white"
+              >
+                <Heart className="w-6 h-6 mr-2 fill-white drop-shadow-lg" />
+                <span className="font-bold text-lg drop-shadow-lg">{post.likes_count}</span>
+              </motion.div>
+              <motion.div
+                initial={{ y: 10 }}
+                whileHover={{ y: 0 }}
+                className="flex items-center text-white"
+              >
+                <MessageCircle className="w-6 h-6 mr-2 fill-white drop-shadow-lg" />
+                <span className="font-bold text-lg drop-shadow-lg">{post.comments_count}</span>
+              </motion.div>
             </div>
-          </button>
+          </motion.button>
         ))}
       </div>
 
       {/* Post Detail Modal */}
-      {selectedPost && (
-        <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedPost(null)}
-        >
-          <div
-            className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
+      <AnimatePresence>
+        {selectedPost && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedPost(null)}
           >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+              className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
             {/* Close Button */}
             <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center z-10">
               <h3 className="font-semibold">Post</h3>
@@ -187,9 +220,10 @@ export default function ProfilePostsGrid({ userId }: ProfilePostsGridProps) {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
