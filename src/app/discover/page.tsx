@@ -41,6 +41,15 @@ export default function DiscoverPageV2() {
     strengthLevels: [],
   });
 
+  // Swipe animation values (must be at top level)
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 0, 200], [-25, 0, 25]);
+  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
+  const likeOpacity = useTransform(x, [0, 100], [0, 1]);
+  const likeScale = useTransform(x, [0, 100], [0.8, 1.2]);
+  const nopeOpacity = useTransform(x, [-100, 0], [1, 0]);
+  const nopeScale = useTransform(x, [-100, 0], [1.2, 0.8]);
+
   useEffect(() => {
     loadMatches();
   }, [filters]);
@@ -504,8 +513,8 @@ export default function DiscoverPageV2() {
           <motion.div
             className="absolute top-10 left-10 z-20 pointer-events-none"
             style={{
-              opacity: useTransform(x, [0, 100], [0, 1]),
-              scale: useTransform(x, [0, 100], [0.8, 1.2]),
+              opacity: likeOpacity,
+              scale: likeScale,
             }}
           >
             <div className="px-6 py-4 bg-green-500 border-4 border-white rounded-2xl shadow-2xl transform rotate-12">
@@ -516,8 +525,8 @@ export default function DiscoverPageV2() {
           <motion.div
             className="absolute top-10 right-10 z-20 pointer-events-none"
             style={{
-              opacity: useTransform(x, [-100, 0], [1, 0]),
-              scale: useTransform(x, [-100, 0], [1.2, 0.8]),
+              opacity: nopeOpacity,
+              scale: nopeScale,
             }}
           >
             <div className="px-6 py-4 bg-red-500 border-4 border-white rounded-2xl shadow-2xl transform -rotate-12">
