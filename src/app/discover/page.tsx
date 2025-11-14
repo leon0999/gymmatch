@@ -340,11 +340,6 @@ export default function DiscoverPageV2() {
     setCurrentIndex(currentIndex + 1);
   };
 
-  // Swipe animation logic
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 0, 200], [-25, 0, 25]);
-  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
-
   const handleDragEnd = (_: any, info: any) => {
     const swipeThreshold = 100;
 
