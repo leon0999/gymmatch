@@ -92,8 +92,8 @@ export default function FeedPage() {
         <div className="max-w-2xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Dumbbell className="w-7 h-7 text-teal-500" />
-              <h1 className="text-2xl font-black bg-gradient-to-r from-teal-500 to-blue-500 bg-clip-text text-transparent">
+              <Dumbbell className="w-7 h-7 text-emerald-500" />
+              <h1 className="text-2xl font-black text-emerald-600">
                 GymMatch
               </h1>
             </div>
@@ -155,7 +155,7 @@ export default function FeedPage() {
               disabled={loadingMore}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-8 py-3 bg-gradient-to-r from-teal-500 to-blue-500 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-8 py-3 bg-emerald-500 text-white rounded-full font-semibold shadow-lg hover:shadow-xl hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loadingMore ? (
                 <span className="flex items-center space-x-2">

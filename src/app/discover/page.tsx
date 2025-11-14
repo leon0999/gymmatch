@@ -387,9 +387,9 @@ export default function DiscoverPageV2() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading matches...</p>
         </div>
       </div>
@@ -398,7 +398,7 @@ export default function DiscoverPageV2() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 max-w-md">
           <h2 className="text-xl font-bold text-red-800 mb-2">Error</h2>
           <p className="text-red-700">{error}</p>
@@ -415,11 +415,11 @@ export default function DiscoverPageV2() {
 
   if (currentIndex >= matches.length) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="text-center max-w-md">
-          <div className="w-24 h-24 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+          <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
             <svg
-              className="w-12 h-12 text-teal-600"
+              className="w-12 h-12 text-emerald-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -444,13 +444,13 @@ export default function DiscoverPageV2() {
           <div className="space-y-3">
             <button
               onClick={() => router.push('/')}
-              className="w-full px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-full hover:from-teal-600 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-200"
+              className="w-full px-6 py-3 bg-emerald-500 text-white font-semibold rounded-full hover:bg-emerald-600 shadow-lg hover:shadow-xl transition-all duration-200"
             >
               Back to Home
             </button>
             <button
               onClick={loadMatches}
-              className="w-full px-6 py-3 bg-white text-teal-600 font-semibold rounded-full border-2 border-teal-600 hover:bg-teal-50 transition-colors"
+              className="w-full px-6 py-3 bg-white text-emerald-600 font-semibold rounded-full border-2 border-emerald-600 hover:bg-emerald-50 transition-colors"
             >
               Refresh
             </button>
@@ -463,7 +463,7 @@ export default function DiscoverPageV2() {
   const currentMatch = matches[currentIndex];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
+    <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         {/* Header */}
         <div className="mb-6">
@@ -482,7 +482,7 @@ export default function DiscoverPageV2() {
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
             <div
-              className="bg-gradient-to-r from-teal-500 to-blue-500 h-full rounded-full transition-all duration-300 ease-out"
+              className="bg-emerald-600 h-full rounded-full transition-all duration-300 ease-out"
               style={{ width: `${((currentIndex + 1) / matches.length) * 100}%` }}
             />
           </div>
@@ -492,8 +492,8 @@ export default function DiscoverPageV2() {
         <motion.div
           className="relative rounded-3xl shadow-2xl overflow-hidden mb-6 cursor-grab active:cursor-grabbing"
           style={{
-            height: '75vh',
-            maxHeight: '650px',
+            height: '60vh',
+            maxHeight: '550px',
             x,
             rotate,
             opacity,
@@ -530,7 +530,7 @@ export default function DiscoverPageV2() {
           </motion.div>
 
           {/* Background Image */}
-          <div className="absolute inset-0 bg-gradient-to-br from-teal-400 to-blue-500">
+          <div className="absolute inset-0 bg-emerald-500">
             {currentMatch.photo_url ? (
               <img
                 src={currentMatch.photo_url}
@@ -565,7 +565,7 @@ export default function DiscoverPageV2() {
           {/* Today's Workout Part - BIG BADGE */}
           {currentMatch.today_workout_part && (
             <div className="absolute top-6 left-6 z-10">
-              <div className="px-5 py-3 rounded-full backdrop-blur-md bg-teal-500/90 border-2 border-white/50 shadow-xl">
+              <div className="px-5 py-3 rounded-full backdrop-blur-md bg-emerald-500/90 border-2 border-white/50 shadow-xl">
                 <div className="text-white font-bold text-lg capitalize flex items-center gap-2">
                   <span className="text-2xl">
                     {currentMatch.today_workout_part === 'chest' && '💪'}
@@ -686,7 +686,7 @@ export default function DiscoverPageV2() {
                 {currentMatch.matchReasons.slice(0, 3).map((reason, idx) => (
                   <span
                     key={idx}
-                    className="px-3 py-1 backdrop-blur-md bg-teal-500/80 rounded-full text-white text-xs font-medium border border-white/30"
+                    className="px-3 py-1 backdrop-blur-md bg-emerald-500/80 rounded-full text-white text-xs font-medium border border-white/30"
                   >
                     {reason}
                   </span>
@@ -722,7 +722,7 @@ export default function DiscoverPageV2() {
           {/* Like Button */}
           <button
             onClick={handleLike}
-            className="w-20 h-20 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center hover:from-teal-600 hover:to-teal-700 hover:scale-110 active:scale-95 transition-all duration-200 shadow-xl hover:shadow-2xl"
+            className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center hover:bg-emerald-600 hover:scale-110 active:scale-95 transition-all duration-200 shadow-xl hover:shadow-2xl"
             aria-label="Like"
           >
             <svg
@@ -733,26 +733,11 @@ export default function DiscoverPageV2() {
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
             </svg>
           </button>
-
-          {/* Super Like Button (optional future feature placeholder) */}
-          <button
-            onClick={handleLike}
-            className="w-16 h-16 bg-white border-4 border-blue-300 rounded-full flex items-center justify-center hover:border-blue-500 hover:bg-blue-50 hover:scale-110 active:scale-95 transition-all duration-200 group shadow-md"
-            aria-label="Super Like"
-          >
-            <svg
-              className="w-8 h-8 text-blue-400 group-hover:text-blue-600 transition-colors"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-            </svg>
-          </button>
         </div>
 
         <div className="text-center mt-6 space-y-2">
           <p className="text-sm font-medium text-gray-700">
-            ❤️ Like • ⭐ Super Like • ✕ Pass
+            ❤️ Like • ✕ Pass
           </p>
           <p className="text-xs text-gray-500">
             Tap the buttons or swipe to choose
