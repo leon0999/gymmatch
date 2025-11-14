@@ -335,9 +335,9 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading profile...</p>
         </div>
       </div>
@@ -346,7 +346,7 @@ export default function ProfilePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 max-w-md">
           <h2 className="text-xl font-bold text-red-800 mb-2">Error</h2>
           <p className="text-red-700 mb-4">{error}</p>
@@ -359,7 +359,7 @@ export default function ProfilePage() {
             </button>
             <button
               onClick={() => router.push('/onboarding')}
-              className="w-full px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+              className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
             >
               Go to Onboarding
             </button>
@@ -374,33 +374,31 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-        {/* Header */}
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto px-4 py-4 max-w-2xl">
+        {/* Header with Settings Icon */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-          <div className="flex gap-2">
+          <h1 className="text-2xl font-bold text-gray-900">{profile.name}</h1>
+          <div className="flex gap-3">
             {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Settings"
               >
-                Edit Profile
+                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
               </button>
             )}
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
-            >
-              Logout
-            </button>
           </div>
         </div>
 
         {/* Profile Card */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
           {/* Profile Header */}
-          <div className="h-48 bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center relative">
+          <div className="h-48 bg-emerald-500 flex items-center justify-center relative">
             <div className="text-center">
               <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 overflow-hidden">
                 {profile.photo_url ? (
@@ -441,7 +439,7 @@ export default function ProfilePage() {
                       type="text"
                       value={editForm.name}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
                       placeholder="Your name"
                     />
                   </div>
@@ -453,7 +451,7 @@ export default function ProfilePage() {
                       type="number"
                       value={editForm.age || ''}
                       onChange={(e) => setEditForm({ ...editForm, age: parseInt(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
                       placeholder="Age"
                       min="18"
                       max="100"
@@ -470,7 +468,7 @@ export default function ProfilePage() {
                     type="text"
                     value={editForm.location_name}
                     onChange={(e) => setEditForm({ ...editForm, location_name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
                     placeholder="City, State"
                   />
                 </div>
@@ -484,7 +482,7 @@ export default function ProfilePage() {
                     type="text"
                     value={editForm.gym}
                     onChange={(e) => setEditForm({ ...editForm, gym: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
                     placeholder="Your gym name"
                   />
                 </div>
@@ -497,7 +495,7 @@ export default function ProfilePage() {
                   <textarea
                     value={editForm.bio}
                     onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
                     placeholder="Tell others about yourself..."
                     rows={3}
                   />
@@ -511,7 +509,7 @@ export default function ProfilePage() {
                   <select
                     value={editForm.fitness_level}
                     onChange={(e) => setEditForm({ ...editForm, fitness_level: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent capitalize"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent capitalize"
                   >
                     <option value="beginner">Beginner</option>
                     <option value="intermediate">Intermediate</option>
@@ -532,7 +530,7 @@ export default function ProfilePage() {
                         onClick={() => toggleFitnessGoal(goal)}
                         className={`px-3 py-1 rounded-full text-sm font-medium capitalize transition-colors ${
                           editForm.fitness_goals.includes(goal)
-                            ? 'bg-teal-600 text-white'
+                            ? 'bg-emerald-600 text-white'
                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                         }`}
                       >
@@ -555,7 +553,7 @@ export default function ProfilePage() {
                         onClick={() => toggleWorkoutStyle(style)}
                         className={`px-3 py-1 rounded-full text-sm font-medium capitalize transition-colors ${
                           editForm.workout_styles.includes(style)
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-emerald-600 text-white'
                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                         }`}
                       >
@@ -566,20 +564,28 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Save/Cancel Buttons */}
-                <div className="flex gap-3 pt-4">
+                <div className="space-y-3 pt-4">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleSaveProfile}
+                      disabled={saving}
+                      className="flex-1 px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      disabled={saving}
+                      className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                   <button
-                    onClick={handleSaveProfile}
-                    disabled={saving}
-                    className="flex-1 px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    onClick={handleLogout}
+                    className="w-full px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700"
                   >
-                    {saving ? 'Saving...' : 'Save Changes'}
-                  </button>
-                  <button
-                    onClick={handleCancelEdit}
-                    disabled={saving}
-                    className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Cancel
+                    Logout
                   </button>
                 </div>
               </div>
@@ -629,7 +635,7 @@ export default function ProfilePage() {
                       {profile.fitness_goals.map((goal, idx) => (
                         <span
                           key={idx}
-                          className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-medium capitalize"
+                          className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium capitalize"
                         >
                           {goal.replace('_', ' ')}
                         </span>
@@ -646,7 +652,7 @@ export default function ProfilePage() {
                       {profile.workout_styles.map((style, idx) => (
                         <span
                           key={idx}
-                          className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium capitalize"
+                          className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium capitalize"
                         >
                           {style}
                         </span>
@@ -684,7 +690,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex justify-between">
                     <span>Premium Status</span>
-                    <span className={profile.is_premium ? 'text-teal-600 font-semibold' : ''}>
+                    <span className={profile.is_premium ? 'text-emerald-600 font-semibold' : ''}>
                       {profile.is_premium ? '✓ Active' : 'Free'}
                     </span>
                   </div>
@@ -737,7 +743,7 @@ export default function ProfilePage() {
           </Link>
           <Link
             href="/discover"
-            className="flex-1 px-6 py-3 bg-teal-600 text-white font-semibold rounded-full hover:bg-teal-700 text-center"
+            className="flex-1 px-6 py-3 bg-emerald-600 text-white font-semibold rounded-full hover:bg-emerald-700 text-center"
           >
             Discover
           </Link>
