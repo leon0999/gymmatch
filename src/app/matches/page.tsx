@@ -118,7 +118,7 @@ export default function MatchesPage() {
           .eq('match_id', match.id)
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         // Get unread count (messages sent by other user that are unread)
         const { count: unreadCount } = await supabase
