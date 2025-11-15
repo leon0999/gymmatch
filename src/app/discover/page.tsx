@@ -415,47 +415,42 @@ export default function DiscoverPageV2() {
 
   if (currentIndex >= matches.length) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-            <svg
-              className="w-12 h-12 text-emerald-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">
-            All caught up!
-          </h2>
-          <p className="text-gray-600 mb-2">
-            You've seen all available matches in your area.
-          </p>
-          <p className="text-sm text-gray-500 mb-8">
-            Check back soon for new gym partners!
-          </p>
-          <div className="space-y-3">
-            <button
-              onClick={() => router.push('/')}
-              className="w-full px-6 py-3 bg-emerald-500 text-white font-semibold rounded-full hover:bg-emerald-600 shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-              Back to Home
-            </button>
+      <div className="min-h-screen bg-white flex flex-col">
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-center max-w-md">
+            <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <svg
+                className="w-12 h-12 text-emerald-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">
+              All caught up!
+            </h2>
+            <p className="text-gray-600 mb-2">
+              You've seen all available matches in your area.
+            </p>
+            <p className="text-sm text-gray-500 mb-8">
+              Check back soon for new gym partners!
+            </p>
             <button
               onClick={loadMatches}
-              className="w-full px-6 py-3 bg-white text-emerald-600 font-semibold rounded-full border-2 border-emerald-600 hover:bg-emerald-50 transition-colors"
+              className="w-full px-6 py-3 bg-emerald-500 text-white font-semibold rounded-full hover:bg-emerald-600 shadow-lg hover:shadow-xl transition-all duration-200"
             >
               Refresh
             </button>
           </div>
         </div>
+        <BottomNav />
       </div>
     );
   }

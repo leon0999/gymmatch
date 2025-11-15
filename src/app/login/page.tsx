@@ -63,9 +63,9 @@ export default function LoginPage() {
         return;
       }
 
-      // Profile exists - redirect to home
-      console.log('✅ Profile found, redirecting to home');
-      router.push('/');
+      // Profile exists - redirect to feed
+      console.log('✅ Profile found, redirecting to feed');
+      router.push('/feed');
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Something went wrong');

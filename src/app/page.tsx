@@ -10,12 +10,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import BottomNav from '@/components/BottomNav';
 
 export default function Home() {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,8 +32,9 @@ export default function Home() {
           .single();
 
         if (profile) {
-          setIsLoggedIn(true);
-          setUserName(profile.name);
+          // Redirect logged-in users to feed
+          router.push('/feed');
+          return;
         }
       }
     } catch (err) {
@@ -50,77 +48,6 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center">
         <div className="w-16 h-16 border-4 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  // Logged in view
-  if (isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
-        <div className="container mx-auto px-4 py-16">
-          <div className="flex flex-col items-center justify-center text-center max-w-4xl mx-auto">
-            {/* Welcome Message */}
-            <div className="mb-8">
-              <h1 className="text-5xl font-bold text-gray-900 mb-4">
-                Welcome back, {userName}! 👋
-              </h1>
-              <p className="text-xl text-gray-600">
-                Ready to find your perfect gym partner?
-              </p>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="grid md:grid-cols-3 gap-6 w-full max-w-3xl mb-12">
-              <Link
-                href="/discover"
-                className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow group"
-              >
-                <div className="text-5xl mb-4">❤️</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-600">
-                  Discover
-                </h3>
-                <p className="text-gray-600">
-                  Find new gym partners
-                </p>
-              </Link>
-
-              <Link
-                href="/matches"
-                className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow group"
-              >
-                <div className="text-5xl mb-4">💬</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-600">
-                  Matches
-                </h3>
-                <p className="text-gray-600">
-                  Chat with your matches
-                </p>
-              </Link>
-
-              <Link
-                href="/profile"
-                className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow group"
-              >
-                <div className="text-5xl mb-4">👤</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-600">
-                  Profile
-                </h3>
-                <p className="text-gray-600">
-                  View & edit profile
-                </p>
-              </Link>
-            </div>
-
-            {/* Primary CTA */}
-            <Link
-              href="/discover"
-              className="px-12 py-5 bg-teal-600 text-white text-xl font-bold rounded-full hover:bg-teal-700 transition-colors shadow-xl hover:shadow-2xl inline-block"
-            >
-              Start Swiping →
-            </Link>
-          </div>
-        </div>
       </div>
     );
   }
@@ -297,8 +224,6 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* Bottom Navigation (only when logged in) */}
-      {isLoggedIn && <BottomNav />}
     </div>
   );
 }
