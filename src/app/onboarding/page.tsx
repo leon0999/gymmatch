@@ -311,7 +311,7 @@ export default function OnboardingPage() {
                     value={formData.name}
                     onChange={(e) => updateField('name', e.target.value)}
                     placeholder="Your name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-400"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-600"
                   />
                 </div>
 
@@ -323,10 +323,9 @@ export default function OnboardingPage() {
                     type="number"
                     value={formData.age || ''}
                     onChange={(e) => updateField('age', parseInt(e.target.value))}
-                    placeholder="25"
                     min="18"
                     max="99"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-400"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900"
                   />
                 </div>
 
@@ -360,7 +359,7 @@ export default function OnboardingPage() {
                     value={formData.location}
                     onChange={(e) => updateField('location', e.target.value)}
                     placeholder="Manhattan, NYC"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-400"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-600"
                   />
                   <p className="text-sm text-gray-500 mt-1">
                     We'll use this to find gym partners near you
@@ -716,7 +715,7 @@ export default function OnboardingPage() {
                     placeholder="Looking for a consistent workout partner to hit the gym 3-4x/week. Love powerlifting and trying new protein shakes!"
                     rows={6}
                     maxLength={300}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent resize-none text-gray-900 placeholder:text-gray-400"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent resize-none text-gray-900 placeholder:text-gray-600"
                   />
                   <p className="text-sm text-gray-500 mt-1">
                     {formData.bio.length}/300 characters

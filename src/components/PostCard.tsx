@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Post } from '@/lib/types';
 import { Heart, MessageCircle, MoreVertical } from 'lucide-react';
 import CommentSection from './CommentSection';
+import { supabase } from '@/lib/supabase';
 
 interface PostCardProps {
   post: Post;
@@ -34,8 +35,22 @@ export default function PostCard({ post, onLikeChange, onCommentChange, onDelete
 
     try {
       setLoading(true);
+
+      // Get session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('Session expired. Please log in again.');
+        setLiked(!newLiked);
+        setLikesCount(newLiked ? optimisticCount - 1 : optimisticCount + 1);
+        onLikeChange?.(post.id, !newLiked, newLiked ? optimisticCount - 1 : optimisticCount + 1);
+        return;
+      }
+
       const res = await fetch(`/api/posts/${post.id}/like`, {
         method: newLiked ? 'POST' : 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
       });
 
       if (!res.ok) {
@@ -107,13 +122,13 @@ export default function PostCard({ post, onLikeChange, onCommentChange, onDelete
             </div>
           )}
           <div>
-            <p className="font-semibold text-sm">
+            <p className="font-semibold text-sm text-gray-900">
               {post.photographer?.name}
-              <span className="font-normal text-gray-500"> photographed </span>
+              <span className="font-normal text-gray-700"> photographed </span>
               {post.user?.name}
             </p>
             {post.workout_type && (
-              <p className="text-xs text-gray-500 capitalize">{post.workout_type}</p>
+              <p className="text-xs text-gray-700 capitalize">{post.workout_type}</p>
             )}
           </div>
         </div>
@@ -123,7 +138,7 @@ export default function PostCard({ post, onLikeChange, onCommentChange, onDelete
             onClick={() => setShowMenu(!showMenu)}
             className="p-2 hover:bg-gray-100 rounded-full"
           >
-            <MoreVertical className="w-5 h-5" />
+            <MoreVertical className="w-5 h-5 text-gray-900" />
           </button>
 
           {showMenu && (
@@ -192,13 +207,34 @@ export default function PostCard({ post, onLikeChange, onCommentChange, onDelete
           </p>
         )}
 
-        {/* Caption */}
-        {post.caption && (
-          <p className="text-sm mb-2">
-            <span className="font-semibold mr-2">{post.photographer?.name}</span>
-            {post.caption}
+        {/* Caption & Workout Info */}
+        <div className="mb-2">
+          {/* Username + Caption */}
+          <p className="text-sm">
+            <span className="font-semibold mr-1">{post.photographer?.name}</span>
+            {post.caption ? (
+              <span className="text-gray-900">{post.caption}</span>
+            ) : (
+              <span className="text-gray-400 italic">No caption</span>
+            )}
           </p>
-        )}
+
+          {/* Workout Details */}
+          {(post.workout_type || post.exercise_name) && (
+            <div className="mt-1 flex flex-wrap gap-2">
+              {post.workout_type && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 capitalize">
+                  {post.workout_type}
+                </span>
+              )}
+              {post.exercise_name && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {post.exercise_name}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Comments Toggle */}
         {commentsCount > 0 && (

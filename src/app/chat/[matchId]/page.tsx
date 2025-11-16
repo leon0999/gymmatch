@@ -18,6 +18,15 @@ interface MessageWithSender extends Message {
   sender_name?: string;
 }
 
+interface Match {
+  id: string;
+  user1_id: string;
+  user2_id: string;
+  user1_photo_session_approved: boolean;
+  user2_photo_session_approved: boolean;
+  matched_at: string;
+}
+
 export default function ChatPage() {
   const router = useRouter();
   const params = useParams();
@@ -25,6 +34,7 @@ export default function ChatPage() {
 
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [otherProfile, setOtherProfile] = useState<Profile | null>(null);
+  const [match, setMatch] = useState<Match | null>(null);
   const [messages, setMessages] = useState<MessageWithSender[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -34,6 +44,7 @@ export default function ChatPage() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [isReporting, setIsReporting] = useState(false);
+  const [isTogglingApproval, setIsTogglingApproval] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -137,25 +148,28 @@ export default function ChatPage() {
       setCurrentUser(user);
 
       // Get match details
-      const { data: match, error: matchError } = await supabase
+      const { data: matchData, error: matchError } = await supabase
         .from('matches')
         .select('*')
         .eq('id', matchId)
         .single();
 
-      if (matchError || !match) {
+      if (matchError || !matchData) {
         setError('Match not found');
         return;
       }
 
       // Verify user is part of this match
-      if (match.user1_id !== user.id && match.user2_id !== user.id) {
+      if (matchData.user1_id !== user.id && matchData.user2_id !== user.id) {
         setError('You are not part of this match');
         return;
       }
 
+      // Save match data
+      setMatch(matchData as Match);
+
       // Get other user's profile
-      const otherUserId = match.user1_id === user.id ? match.user2_id : match.user1_id;
+      const otherUserId = matchData.user1_id === user.id ? matchData.user2_id : matchData.user1_id;
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -341,6 +355,48 @@ export default function ChatPage() {
     }
   };
 
+  const togglePhotoSessionApproval = async () => {
+    if (!currentUser || !match) return;
+
+    try {
+      setIsTogglingApproval(true);
+
+      // Determine which user is approving
+      const isUser1 = match.user1_id === currentUser.id;
+      const currentApprovalField = isUser1 ? 'user1_photo_session_approved' : 'user2_photo_session_approved';
+      const currentApprovalStatus = isUser1 ? match.user1_photo_session_approved : match.user2_photo_session_approved;
+
+      // Toggle approval
+      const { data, error } = await supabase
+        .from('matches')
+        .update({ [currentApprovalField]: !currentApprovalStatus })
+        .eq('id', matchId)
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Error toggling approval:', error);
+        alert('Failed to update approval. Please try again.');
+        return;
+      }
+
+      // Update local state
+      setMatch(data as Match);
+
+      // Show success message
+      if (!currentApprovalStatus) {
+        alert(`Photo Session 승인 완료! ${otherProfile?.name}님이 승인하면 서로 사진을 올릴 수 있습니다.`);
+      } else {
+        alert('Photo Session 승인이 취소되었습니다.');
+      }
+    } catch (err) {
+      console.error('Error toggling approval:', err);
+      alert('Something went wrong. Please try again.');
+    } finally {
+      setIsTogglingApproval(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center">
@@ -416,25 +472,72 @@ export default function ChatPage() {
             </div>
           </div>
 
-          <div className="relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          <div className="flex items-center gap-2">
+            {/* Photo Session Approval Button */}
+            {match && (() => {
+              const isUser1 = match.user1_id === currentUser?.id;
+              const myApproval = isUser1 ? match.user1_photo_session_approved : match.user2_photo_session_approved;
+              const otherApproval = isUser1 ? match.user2_photo_session_approved : match.user1_photo_session_approved;
+              const bothApproved = myApproval && otherApproval;
+
+              return (
+                <button
+                  onClick={togglePhotoSessionApproval}
+                  disabled={isTogglingApproval}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                    bothApproved
+                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                      : myApproval
+                      ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  } ${isTogglingApproval ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {bothApproved ? (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      승인됨
+                    </>
+                  ) : myApproval ? (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      대기 중
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      승인하기
+                    </>
+                  )}
+                </button>
+              );
+            })()}
+
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="text-gray-400 hover:text-gray-600"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                />
-              </svg>
-            </button>
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                  />
+                </svg>
+              </button>
 
             {/* Dropdown Menu */}
             {showMenu && (
@@ -465,6 +568,7 @@ export default function ChatPage() {
                 </button>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
@@ -550,7 +654,7 @@ export default function ChatPage() {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-400"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-600"
               disabled={sending}
             />
             <button

@@ -17,6 +17,7 @@ import type { Database } from '@/lib/database.types';
 import MatchModal from '@/components/MatchModal';
 import BottomNav from '@/components/BottomNav';
 import DiscoverFilters, { DiscoverFilterOptions } from '@/components/DiscoverFilters';
+import { History } from 'lucide-react';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -330,8 +331,18 @@ export default function DiscoverPageV2() {
     const match = matches[currentIndex];
 
     try {
-      // Just skip - no database record for passes
-      console.log('❌ Passed:', match.name);
+      // Record pass in database (so they don't show up again)
+      const { error } = await supabase.from('likes').insert({
+        from_user_id: currentUser.user_id,
+        to_user_id: match.user_id,
+        is_pass: true, // Mark as pass (not a like)
+      });
+
+      if (error) {
+        console.error('Error recording pass:', error);
+      } else {
+        console.log('❌ Passed:', match.name);
+      }
     } catch (err) {
       console.error('Error in handlePass:', err);
     }
@@ -469,6 +480,13 @@ export default function DiscoverPageV2() {
                 setFilters(newFilters);
                 setCurrentIndex(0);
               }} />
+              <button
+                onClick={() => router.push('/history')}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="View History"
+              >
+                <History className="w-6 h-6 text-gray-700" />
+              </button>
               <div className="text-sm font-medium text-gray-600">
                 {currentIndex + 1} of {matches.length}
               </div>

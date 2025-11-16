@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * POST /api/posts/upload
@@ -9,6 +9,30 @@ import { supabase } from '@/lib/supabase';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Get Authorization token from header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Missing token' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    // Create Supabase client with the user's token
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    );
+
     const {
       userId,          // 사진 주인공 (subject)
       photographerId,  // 찍은 사람 (photographer)
@@ -30,10 +54,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: 'Unauthorized: Invalid token' },
         { status: 401 }
       );
     }

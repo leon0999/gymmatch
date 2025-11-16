@@ -1,18 +1,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Dumbbell } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Dumbbell, Camera, X } from 'lucide-react';
 import { Post } from '@/lib/types';
 import PostCard from '@/components/PostCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { supabase } from '@/lib/supabase';
+
+interface ApprovedMatch {
+  matchId: string;
+  partnerId: string;
+  partnerName: string;
+  partnerPhotoUrl?: string;
+}
 
 export default function FeedPage() {
+  const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [showApprovedMatchesModal, setShowApprovedMatchesModal] = useState(false);
+  const [approvedMatches, setApprovedMatches] = useState<ApprovedMatch[]>([]);
+  const [loadingMatches, setLoadingMatches] = useState(false);
 
   // Load initial feed
   useEffect(() => {
@@ -75,6 +88,73 @@ export default function FeedPage() {
 
   const handleDeletePost = (postId: string) => {
     setPosts(prev => prev.filter(post => post.id !== postId));
+  };
+
+  const loadApprovedMatches = async () => {
+    try {
+      setLoadingMatches(true);
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get all matches where both users have approved
+      const { data: matchesData, error } = await supabase
+        .from('matches')
+        .select('*')
+        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+        .eq('user1_photo_session_approved', true)
+        .eq('user2_photo_session_approved', true);
+
+      if (error) {
+        console.error('Error loading approved matches:', error);
+        return;
+      }
+
+      if (!matchesData || matchesData.length === 0) {
+        setApprovedMatches([]);
+        return;
+      }
+
+      // Get partner profiles
+      const approvedMatchesList: ApprovedMatch[] = [];
+
+      for (const match of matchesData) {
+        const partnerId = match.user1_id === user.id ? match.user2_id : match.user1_id;
+
+        // Get partner profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name, photo_url')
+          .eq('user_id', partnerId)
+          .single();
+
+        if (profile) {
+          approvedMatchesList.push({
+            matchId: match.id,
+            partnerId,
+            partnerName: profile.name,
+            partnerPhotoUrl: profile.photo_url,
+          });
+        }
+      }
+
+      setApprovedMatches(approvedMatchesList);
+    } catch (err) {
+      console.error('Error loading approved matches:', err);
+    } finally {
+      setLoadingMatches(false);
+    }
+  };
+
+  const handleAddPhotoClick = async () => {
+    await loadApprovedMatches();
+    setShowApprovedMatchesModal(true);
+  };
+
+  const handleSelectMatch = (matchId: string) => {
+    setShowApprovedMatchesModal(false);
+    router.push(`/matches/${matchId}/photo-session`);
   };
 
   if (loading) {
@@ -183,6 +263,114 @@ export default function FeedPage() {
           </motion.div>
         )}
       </div>
+
+      {/* Floating Add Photo Button */}
+      <motion.button
+        onClick={handleAddPhotoClick}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className="fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-20"
+      >
+        <Camera className="w-6 h-6" />
+      </motion.button>
+
+      {/* Approved Matches Modal */}
+      <AnimatePresence>
+        {showApprovedMatchesModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowApprovedMatchesModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl max-w-md w-full max-h-[80vh] overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900">
+                  사진 올릴 파트너 선택
+                </h2>
+                <button
+                  onClick={() => setShowApprovedMatchesModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="overflow-y-auto max-h-[calc(80vh-80px)]">
+                {loadingMatches ? (
+                  <div className="flex items-center justify-center py-12">
+                    <LoadingSpinner />
+                  </div>
+                ) : approvedMatches.length === 0 ? (
+                  <div className="text-center py-12 px-6">
+                    <Camera className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-gray-600 font-semibold mb-2">
+                      승인된 파트너가 없습니다
+                    </p>
+                    <p className="text-gray-400 text-sm">
+                      채팅에서 Photo Session을 먼저 승인해주세요!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {approvedMatches.map((match) => (
+                      <motion.button
+                        key={match.matchId}
+                        onClick={() => handleSelectMatch(match.matchId)}
+                        whileHover={{ backgroundColor: '#f9fafb' }}
+                        className="w-full p-4 flex items-center gap-4 transition-colors"
+                      >
+                        <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {match.partnerPhotoUrl ? (
+                            <img
+                              src={match.partnerPhotoUrl}
+                              alt={match.partnerName}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-2xl">👤</span>
+                          )}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className="font-semibold text-gray-900">
+                            {match.partnerName}
+                          </p>
+                          <p className="text-sm text-emerald-600 flex items-center gap-1">
+                            <Camera className="w-4 h-4" />
+                            Photo Session 승인됨
+                          </p>
+                        </div>
+                        <svg
+                          className="w-5 h-5 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

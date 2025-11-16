@@ -14,8 +14,9 @@ interface Match {
   user2?: { name: string; photo_url?: string; };
 }
 
-export default function PhotoSessionPage({ params }: { params: { matchId: string } }) {
+export default function PhotoSessionPage({ params }: { params: Promise<{ matchId: string }> }) {
   const router = useRouter();
+  const [matchId, setMatchId] = useState<string | null>(null);
   const [match, setMatch] = useState<Match | null>(null);
   const [partner, setPartner] = useState<{ id: string; name: string; photo_url?: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,10 +30,22 @@ export default function PhotoSessionPage({ params }: { params: { matchId: string
   });
 
   useEffect(() => {
-    loadMatch();
-  }, [params.matchId]);
+    async function unwrapParams() {
+      const resolvedParams = await params;
+      setMatchId(resolvedParams.matchId);
+    }
+    unwrapParams();
+  }, []);
+
+  useEffect(() => {
+    if (matchId) {
+      loadMatch();
+    }
+  }, [matchId]);
 
   const loadMatch = async () => {
+    if (!matchId) return;
+
     try {
       setLoading(true);
 
@@ -50,7 +63,7 @@ export default function PhotoSessionPage({ params }: { params: { matchId: string
           user1:profiles!matches_user1_id_fkey(name, photo_url),
           user2:profiles!matches_user2_id_fkey(name, photo_url)
         `)
-        .eq('id', params.matchId)
+        .eq('id', matchId)
         .single();
 
       if (error || !matchData) {
@@ -143,14 +156,24 @@ export default function PhotoSessionPage({ params }: { params: { matchId: string
       // Create thumbnail URL for videos (use first frame or poster)
       const thumbnailUrl = selectedFile.type.startsWith('video/') ? urlData.publicUrl : null;
 
+      // Get session token for API authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('Session expired. Please log in again.');
+        return;
+      }
+
       // Create post via API
       const res = await fetch('/api/posts/upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           userId: partner.id,
           photographerId: user.id,
-          matchId: params.matchId,
+          matchId: matchId,
           mediaType: selectedFile.type.startsWith('video/') ? 'video' : 'photo',
           mediaUrl: urlData.publicUrl,
           thumbnailUrl,
@@ -274,9 +297,9 @@ export default function PhotoSessionPage({ params }: { params: { matchId: string
                 <select
                   value={form.workoutType}
                   onChange={(e) => setForm({ ...form, workoutType: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 >
-                  <option value="">Select workout type</option>
+                  <option value="" className="text-gray-600">Select workout type</option>
                   <option value="chest">Chest</option>
                   <option value="back">Back</option>
                   <option value="legs">Legs</option>
@@ -296,8 +319,8 @@ export default function PhotoSessionPage({ params }: { params: { matchId: string
                   type="text"
                   value={form.exerciseName}
                   onChange={(e) => setForm({ ...form, exerciseName: e.target.value })}
-                  placeholder="e.g., Bench Press, Squats"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Bench Press, Squats..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-600"
                 />
               </div>
 
@@ -309,9 +332,9 @@ export default function PhotoSessionPage({ params }: { params: { matchId: string
                 <textarea
                   value={form.caption}
                   onChange={(e) => setForm({ ...form, caption: e.target.value })}
-                  placeholder="Add a caption..."
+                  placeholder="Write something about this workout..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900 placeholder:text-gray-600"
                 />
               </div>
             </div>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * POST /api/posts/[postId]/like
@@ -13,11 +13,35 @@ export async function POST(
   try {
     const { postId } = await params;
 
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    // Get Authorization token
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: 'Unauthorized: Missing token' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    // Create authenticated Supabase client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    );
+
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Invalid token' },
         { status: 401 }
       );
     }
@@ -93,11 +117,35 @@ export async function DELETE(
   try {
     const { postId } = await params;
 
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    // Get Authorization token
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: 'Unauthorized: Missing token' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    // Create authenticated Supabase client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    );
+
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Invalid token' },
         { status: 401 }
       );
     }

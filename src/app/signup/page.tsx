@@ -121,7 +121,7 @@ export default function SignUpPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-400"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-600"
                 required
               />
             </div>
@@ -136,7 +136,7 @@ export default function SignUpPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="At least 6 characters"
                 minLength={6}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-400"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-600"
                 required
               />
             </div>
@@ -151,7 +151,7 @@ export default function SignUpPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm your password"
                 minLength={6}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-400"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-900 placeholder:text-gray-600"
                 required
               />
             </div>
