@@ -17,6 +17,7 @@ import type { Database } from '@/lib/database.types';
 import MatchModal from '@/components/MatchModal';
 import BottomNav from '@/components/BottomNav';
 import DiscoverFilters, { DiscoverFilterOptions } from '@/components/DiscoverFilters';
+import TodayWorkoutPopup from '@/components/TodayWorkoutPopup';
 import { History } from 'lucide-react';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -41,6 +42,8 @@ export default function DiscoverPageV2() {
     workoutParts: [],
     strengthLevels: [],
   });
+  const [showWorkoutPopup, setShowWorkoutPopup] = useState(false);
+  const [todayFocus, setTodayFocus] = useState<string | null>(null);
 
   // Swipe animation values (must be at top level)
   const x = useMotionValue(0);
@@ -52,8 +55,50 @@ export default function DiscoverPageV2() {
   const nopeScale = useTransform(x, [-100, 0], [1.2, 0.8]);
 
   useEffect(() => {
-    loadMatches();
-  }, [filters]);
+    checkTodayWorkoutFocus();
+  }, []);
+
+  useEffect(() => {
+    if (todayFocus !== null) {
+      loadMatches();
+    }
+  }, [filters, todayFocus]);
+
+  const checkTodayWorkoutFocus = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/onboarding');
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('today_workout_focus, workout_focus_updated_at')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile) return;
+
+      // Check if updated today
+      const today = new Date().toDateString();
+      const lastUpdated = profile.workout_focus_updated_at
+        ? new Date(profile.workout_focus_updated_at).toDateString()
+        : null;
+
+      if (!profile.today_workout_focus || lastUpdated !== today) {
+        // Show popup to select today's workout focus
+        setShowWorkoutPopup(true);
+      } else {
+        // Already selected today
+        setTodayFocus(profile.today_workout_focus);
+      }
+    } catch (error) {
+      console.error('Failed to check workout focus:', error);
+      // Continue without popup
+      setTodayFocus('any');
+    }
+  };
 
   const loadMatches = async () => {
     try {
@@ -180,8 +225,30 @@ export default function DiscoverPageV2() {
         matchReasons: getMatchReasons(profile, match),
       }));
 
-      // Sort by score
-      scored.sort((a, b) => b.matchScore - a.matchScore);
+      // Sort by today's workout focus priority + score
+      scored.sort((a, b) => {
+        // Priority 1: Same today's workout focus (if both selected)
+        const aHasSameFocus = todayFocus && todayFocus !== 'any' && a.today_workout_focus === todayFocus;
+        const bHasSameFocus = todayFocus && todayFocus !== 'any' && b.today_workout_focus === todayFocus;
+
+        // Check if their focus was updated today
+        const today = new Date().toDateString();
+        const aUpdatedToday = a.workout_focus_updated_at
+          ? new Date(a.workout_focus_updated_at).toDateString() === today
+          : false;
+        const bUpdatedToday = b.workout_focus_updated_at
+          ? new Date(b.workout_focus_updated_at).toDateString() === today
+          : false;
+
+        const aMatch = aHasSameFocus && aUpdatedToday;
+        const bMatch = bHasSameFocus && bUpdatedToday;
+
+        if (aMatch && !bMatch) return -1;
+        if (!aMatch && bMatch) return 1;
+
+        // Priority 2: Match score
+        return b.matchScore - a.matchScore;
+      });
 
       console.log('✅ Final matches:', scored.length);
       setMatches(scored);
@@ -600,9 +667,66 @@ export default function DiscoverPageV2() {
           <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
             {/* Name and Age */}
             <div className="mb-4">
-              <h2 className="text-4xl font-black text-white drop-shadow-lg mb-2">
-                {currentMatch.name}, {currentMatch.age}
-              </h2>
+              <div className="flex items-center gap-3 mb-2">
+                <h2 className="text-4xl font-black text-white drop-shadow-lg">
+                  {currentMatch.name}, {currentMatch.age}
+                </h2>
+
+                {/* Today's Workout Focus Badge */}
+                {currentMatch.today_workout_focus && (() => {
+                  const today = new Date().toDateString();
+                  const updatedToday = currentMatch.workout_focus_updated_at
+                    ? new Date(currentMatch.workout_focus_updated_at).toDateString() === today
+                    : false;
+
+                  const isSameFocus = todayFocus && todayFocus !== 'any' && currentMatch.today_workout_focus === todayFocus;
+
+                  const focusEmojis: Record<string, string> = {
+                    chest: '💪',
+                    back: '🔥',
+                    legs: '🦵',
+                    shoulders: '🏋️',
+                    arms: '💪',
+                    core: '⚡',
+                    cardio: '🏃',
+                    any: '✨',
+                  };
+
+                  const focusLabels: Record<string, string> = {
+                    chest: 'Chest',
+                    back: 'Back',
+                    legs: 'Legs',
+                    shoulders: 'Shoulders',
+                    arms: 'Arms',
+                    core: 'Core',
+                    cardio: 'Cardio',
+                    any: 'Any',
+                  };
+
+                  if (updatedToday) {
+                    return (
+                      <div className={`
+                        inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
+                        backdrop-blur-md border text-sm font-bold
+                        ${isSameFocus
+                          ? 'bg-emerald-500/90 border-emerald-300 text-white animate-pulse'
+                          : 'bg-white/20 border-white/30 text-white'
+                        }
+                      `}>
+                        <span className="text-base">
+                          {focusEmojis[currentMatch.today_workout_focus] || '💪'}
+                        </span>
+                        <span>
+                          {focusLabels[currentMatch.today_workout_focus] || 'Today'}
+                        </span>
+                        {isSameFocus && <span className="text-xs">✨</span>}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+
               <div className="flex items-center gap-3 text-white/90 text-sm">
                 <span className="flex items-center gap-1">
                   📍 {currentMatch.location_name}
@@ -765,6 +889,19 @@ export default function DiscoverPageV2() {
         matchId={newMatchId}
         onClose={() => setShowMatchModal(false)}
       />
+
+      {/* Today's Workout Focus Popup */}
+      {showWorkoutPopup && (
+        <TodayWorkoutPopup
+          onClose={() => {
+            setShowWorkoutPopup(false);
+            setTodayFocus('any'); // Default if they close without selecting
+          }}
+          onSelect={(focus) => {
+            setTodayFocus(focus);
+          }}
+        />
+      )}
 
       {/* Bottom Navigation */}
       <BottomNav />
