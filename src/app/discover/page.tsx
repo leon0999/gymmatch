@@ -739,35 +739,90 @@ export default function DiscoverPageV2() {
               </div>
             </div>
 
-            {/* Workout Stats - 3 Big Lifts */}
-            {(currentMatch.bench_press_1rm || currentMatch.squat_1rm || currentMatch.deadlift_1rm) && (
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                {currentMatch.bench_press_1rm && (
-                  <div className="backdrop-blur-md bg-white/10 rounded-xl p-3 border border-white/20 text-center">
-                    <div className="text-2xl mb-1">🏋️</div>
-                    <div className="text-white font-bold text-lg">{currentMatch.bench_press_1rm}kg</div>
-                    <div className="text-white/70 text-xs">Bench</div>
+            {/* PR Stats - Big 3 + Big 3 Total */}
+            {(currentMatch.bench_pr || currentMatch.squat_pr || currentMatch.deadlift_pr || currentMatch.big_three_total) && (
+              <div className="mb-4">
+                {/* Big 3 Total Badge - Most Important! */}
+                {currentMatch.big_three_total && (
+                  <div className="mb-3 backdrop-blur-md bg-gradient-to-r from-yellow-500/90 to-orange-500/90 rounded-2xl p-4 border-2 border-yellow-300/50 shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-3xl">🏆</span>
+                        <div>
+                          <div className="text-white/80 text-xs font-bold uppercase tracking-wider">Big 3 Total</div>
+                          <div className="text-white font-black text-2xl">{currentMatch.big_three_total} lbs</div>
+                        </div>
+                      </div>
+                      {currentMatch.body_weight && (
+                        <div className="text-right">
+                          <div className="text-white/80 text-xs font-bold uppercase tracking-wider">Ratio</div>
+                          <div className="text-white font-bold text-lg">{(currentMatch.big_three_total / currentMatch.body_weight).toFixed(1)}x</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-                {currentMatch.squat_1rm && (
-                  <div className="backdrop-blur-md bg-white/10 rounded-xl p-3 border border-white/20 text-center">
-                    <div className="text-2xl mb-1">🦵</div>
-                    <div className="text-white font-bold text-lg">{currentMatch.squat_1rm}kg</div>
-                    <div className="text-white/70 text-xs">Squat</div>
-                  </div>
-                )}
-                {currentMatch.deadlift_1rm && (
-                  <div className="backdrop-blur-md bg-white/10 rounded-xl p-3 border border-white/20 text-center">
-                    <div className="text-2xl mb-1">💪</div>
-                    <div className="text-white font-bold text-lg">{currentMatch.deadlift_1rm}kg</div>
-                    <div className="text-white/70 text-xs">Deadlift</div>
-                  </div>
-                )}
+
+                {/* Individual PRs Grid */}
+                <div className="grid grid-cols-3 gap-2">
+                  {currentMatch.bench_pr && (
+                    <div className="backdrop-blur-md bg-white/10 rounded-xl p-2.5 border border-white/20 text-center">
+                      <div className="text-lg mb-0.5">🏋️</div>
+                      <div className="text-white font-bold text-base">{currentMatch.bench_pr}</div>
+                      <div className="text-white/70 text-xs">Bench</div>
+                    </div>
+                  )}
+                  {currentMatch.squat_pr && (
+                    <div className="backdrop-blur-md bg-white/10 rounded-xl p-2.5 border border-white/20 text-center">
+                      <div className="text-lg mb-0.5">🦵</div>
+                      <div className="text-white font-bold text-base">{currentMatch.squat_pr}</div>
+                      <div className="text-white/70 text-xs">Squat</div>
+                    </div>
+                  )}
+                  {currentMatch.deadlift_pr && (
+                    <div className="backdrop-blur-md bg-white/10 rounded-xl p-2.5 border border-white/20 text-center">
+                      <div className="text-lg mb-0.5">💪</div>
+                      <div className="text-white font-bold text-base">{currentMatch.deadlift_pr}</div>
+                      <div className="text-white/70 text-xs">Deadlift</div>
+                    </div>
+                  )}
+                  {currentMatch.overhead_press_pr && (
+                    <div className="backdrop-blur-md bg-white/10 rounded-xl p-2.5 border border-white/20 text-center">
+                      <div className="text-lg mb-0.5">🔥</div>
+                      <div className="text-white font-bold text-base">{currentMatch.overhead_press_pr}</div>
+                      <div className="text-white/70 text-xs">OHP</div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Workout Details Row */}
             <div className="flex flex-wrap gap-2 mb-3">
+              {/* Workout Split - Most Important! */}
+              {currentMatch.workout_split && (
+                <div className="px-3 py-1.5 backdrop-blur-md bg-gradient-to-r from-emerald-500/90 to-teal-500/90 rounded-full border-2 border-emerald-300/50 text-white text-sm font-black flex items-center gap-1.5 shadow-lg">
+                  <span>💪</span>
+                  <span>{currentMatch.workout_split}</span>
+                </div>
+              )}
+
+              {/* Weekly Frequency */}
+              {currentMatch.weekly_frequency && (
+                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
+                  <span>📅</span>
+                  <span>{currentMatch.weekly_frequency}x/week</span>
+                </div>
+              )}
+
+              {/* Years Training */}
+              {currentMatch.years_training && (
+                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
+                  <span>🏋️</span>
+                  <span>{currentMatch.years_training}yr{currentMatch.years_training > 1 ? 's' : ''}</span>
+                </div>
+              )}
+
               {/* Current Goal */}
               {currentMatch.current_goal && (
                 <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
@@ -783,16 +838,24 @@ export default function DiscoverPageV2() {
                 </div>
               )}
 
-              {/* Workout Time */}
-              {currentMatch.workout_time_preference && (
+              {/* Preferred Time */}
+              {currentMatch.preferred_time && (
+                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
+                  <span>🕐</span>
+                  <span className="capitalize">{currentMatch.preferred_time.replace('_', ' ')}</span>
+                </div>
+              )}
+
+              {/* Workout Time (legacy) */}
+              {currentMatch.workout_time_preference && !currentMatch.preferred_time && (
                 <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
                   <span>🕐</span>
                   <span className="capitalize">{currentMatch.workout_time_preference.replace('_', ' ')}</span>
                 </div>
               )}
 
-              {/* Experience */}
-              {currentMatch.workout_experience_months && (
+              {/* Experience (legacy) */}
+              {currentMatch.workout_experience_months && !currentMatch.years_training && (
                 <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
                   <span>📅</span>
                   <span>{Math.floor(currentMatch.workout_experience_months / 12)}y {currentMatch.workout_experience_months % 12}m</span>
