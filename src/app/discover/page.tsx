@@ -217,13 +217,25 @@ export default function DiscoverPageV2() {
         console.warn('⚠️ No profiles match your preferences!');
       }
 
-      // Calculate match scores (improved algorithm)
-      const scored = filteredProfiles.map((match) => ({
-        ...match,
-        matchScore: calculateImprovedScore(profile, match),
-        distance: calculateSimpleDistance(profile, match),
-        matchReasons: getMatchReasons(profile, match),
-      }));
+      // Calculate match scores using advanced algorithm (225 points max)
+      const scored = await Promise.all(
+        filteredProfiles.map(async (match) => {
+          // Call database function for advanced scoring
+          const { data: scoreData } = await supabase.rpc('calculate_advanced_match_score', {
+            my_user_id: user.id,
+            other_user_id: match.user_id,
+          });
+
+          const matchScore = scoreData || 0;
+
+          return {
+            ...match,
+            matchScore,
+            distance: calculateSimpleDistance(profile, match),
+            matchReasons: getAdvancedMatchReasons(profile, match, matchScore),
+          };
+        })
+      );
 
       // Sort by today's workout focus priority + score
       scored.sort((a, b) => {
@@ -260,52 +272,8 @@ export default function DiscoverPageV2() {
     }
   };
 
-  const calculateImprovedScore = (user: Profile, match: Profile): number => {
-    let score = 0;
-
-    // 1. Location compatibility (0-25 points)
-    if (user.location_name?.toLowerCase() === match.location_name?.toLowerCase()) {
-      score += 25; // Same city is very important
-    } else {
-      score += 5; // Different city but still possible
-    }
-
-    // 2. Fitness level compatibility (0-20 points)
-    if (user.fitness_level === match.fitness_level) {
-      score += 20; // Perfect match
-    } else {
-      // Adjacent levels get partial points
-      const levels = ['beginner', 'intermediate', 'advanced'];
-      const userLevel = levels.indexOf(user.fitness_level || 'beginner');
-      const matchLevel = levels.indexOf(match.fitness_level || 'beginner');
-      const diff = Math.abs(userLevel - matchLevel);
-      if (diff === 1) score += 10; // One level apart
-      // 2+ levels apart: 0 points
-    }
-
-    // 3. Fitness goals overlap (0-20 points)
-    const commonGoals = user.fitness_goals?.filter((g) =>
-      match.fitness_goals?.includes(g)
-    ) || [];
-    if (commonGoals.length > 0) {
-      score += Math.min(20, commonGoals.length * 7); // Up to 20 points
-    }
-
-    // 4. Workout styles overlap (0-20 points)
-    const commonStyles = user.workout_styles?.filter((s) =>
-      match.workout_styles?.includes(s)
-    ) || [];
-    if (commonStyles.length > 0) {
-      score += Math.min(20, commonStyles.length * 7); // Up to 20 points
-    }
-
-    // 5. Same gym (0-15 points) - HUGE bonus!
-    if (user.gym && match.gym && user.gym.toLowerCase() === match.gym.toLowerCase()) {
-      score += 15;
-    }
-
-    return Math.min(100, Math.round(score));
-  };
+  // Legacy function - kept for reference but not used anymore
+  // Now using calculate_advanced_match_score() from database (225 points max)
 
   const calculateSimpleDistance = (user: Profile, match: Profile): number => {
     // MVP: Same city = 1 mile, different = 5 miles
@@ -362,6 +330,90 @@ export default function DiscoverPageV2() {
     }
 
     return reasons.slice(0, 4); // Show up to 4 reasons
+  };
+
+  // Advanced match reasons based on 225-point scoring system
+  const getAdvancedMatchReasons = (user: Profile, match: Profile, score: number): string[] => {
+    const reasons: string[] = [];
+
+    // 1. Same today's workout focus (+50)
+    const today = new Date().toDateString();
+    const userUpdatedToday = user.workout_focus_updated_at
+      ? new Date(user.workout_focus_updated_at).toDateString() === today
+      : false;
+    const matchUpdatedToday = match.workout_focus_updated_at
+      ? new Date(match.workout_focus_updated_at).toDateString() === today
+      : false;
+
+    if (user.today_workout_focus && match.today_workout_focus &&
+        user.today_workout_focus === match.today_workout_focus &&
+        userUpdatedToday && matchUpdatedToday) {
+      const focusLabels: Record<string, string> = {
+        chest: 'Chest', back: 'Back', legs: 'Legs',
+        shoulders: 'Shoulders', arms: 'Arms', core: 'Core',
+        cardio: 'Cardio', any: 'Any',
+      };
+      reasons.push(`🔥 Training ${focusLabels[match.today_workout_focus] || match.today_workout_focus} TODAY!`);
+    }
+
+    // 2. Same workout split (+30)
+    if (user.workout_split && match.workout_split && user.workout_split === match.workout_split) {
+      reasons.push(`💪 Both run ${match.workout_split}`);
+    }
+
+    // 3. Similar PRs (+20 each for Bench, Squat, Deadlift within ±45lbs)
+    const prReasons: string[] = [];
+    if (user.bench_pr && match.bench_pr && Math.abs(user.bench_pr - match.bench_pr) <= 45) {
+      prReasons.push('Bench');
+    }
+    if (user.squat_pr && match.squat_pr && Math.abs(user.squat_pr - match.squat_pr) <= 45) {
+      prReasons.push('Squat');
+    }
+    if (user.deadlift_pr && match.deadlift_pr && Math.abs(user.deadlift_pr - match.deadlift_pr) <= 45) {
+      prReasons.push('Deadlift');
+    }
+    if (prReasons.length > 0) {
+      reasons.push(`🏋️ Similar PRs: ${prReasons.join(', ')}`);
+    }
+
+    // 4. Same gym (+30)
+    if (user.gym_name && match.gym_name && user.gym_name.toLowerCase() === match.gym_name.toLowerCase()) {
+      reasons.push(`🏢 Same gym: ${match.gym_name}`);
+    }
+
+    // 5. Same preferred time (+15)
+    if (user.preferred_time && match.preferred_time && user.preferred_time === match.preferred_time) {
+      reasons.push(`🕐 Both train ${match.preferred_time.replace('_', ' ')}`);
+    }
+
+    // 6. Similar weekly frequency (±1) (+10)
+    if (user.weekly_frequency && match.weekly_frequency &&
+        Math.abs(user.weekly_frequency - match.weekly_frequency) <= 1) {
+      reasons.push(`📅 Both train ${match.weekly_frequency}x/week`);
+    }
+
+    // 7. Same fitness level (+10)
+    if (user.fitness_level === match.fitness_level) {
+      reasons.push(`💪 Both ${match.fitness_level} level`);
+    }
+
+    // 8. Preferred gender match (+10)
+    const userPrefersMatch = user.preferred_gender === 'any' || user.preferred_gender === match.gender;
+    const matchPrefersUser = match.preferred_gender === 'any' || match.preferred_gender === user.gender;
+    if (userPrefersMatch && matchPrefersUser) {
+      // Don't show this as it's expected
+    }
+
+    // Add score indicator
+    if (score >= 150) {
+      reasons.unshift(`⭐ ${score}/225 - Perfect Match!`);
+    } else if (score >= 100) {
+      reasons.unshift(`✨ ${score}/225 - Great Match`);
+    } else if (score >= 50) {
+      reasons.unshift(`💫 ${score}/225 - Good Match`);
+    }
+
+    return reasons.slice(0, 5); // Show up to 5 reasons
   };
 
   const handleLike = async () => {
