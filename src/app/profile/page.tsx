@@ -35,6 +35,16 @@ export default function ProfilePage() {
     fitness_goals: [] as string[],
     workout_styles: [] as string[],
     gym: '',
+    // PR and Workout Details
+    bench_pr: null as number | null,
+    squat_pr: null as number | null,
+    deadlift_pr: null as number | null,
+    overhead_press_pr: null as number | null,
+    body_weight: null as number | null,
+    workout_split: '',
+    years_training: null as number | null,
+    weekly_frequency: null as number | null,
+    preferred_time: '',
   });
 
   useEffect(() => {
@@ -89,6 +99,15 @@ export default function ProfilePage() {
         fitness_goals: data.fitness_goals || [],
         workout_styles: data.workout_styles || [],
         gym: data.gym || '',
+        bench_pr: data.bench_pr || null,
+        squat_pr: data.squat_pr || null,
+        deadlift_pr: data.deadlift_pr || null,
+        overhead_press_pr: data.overhead_press_pr || null,
+        body_weight: data.body_weight || null,
+        workout_split: data.workout_split || '',
+        years_training: data.years_training || null,
+        weekly_frequency: data.weekly_frequency || null,
+        preferred_time: data.preferred_time || '',
       });
     } catch (err: any) {
       console.error('Error loading profile:', err);
@@ -208,6 +227,15 @@ export default function ProfilePage() {
           fitness_goals: editForm.fitness_goals,
           workout_styles: editForm.workout_styles,
           gym: editForm.gym.trim(),
+          bench_pr: editForm.bench_pr,
+          squat_pr: editForm.squat_pr,
+          deadlift_pr: editForm.deadlift_pr,
+          overhead_press_pr: editForm.overhead_press_pr,
+          body_weight: editForm.body_weight,
+          workout_split: editForm.workout_split,
+          years_training: editForm.years_training,
+          weekly_frequency: editForm.weekly_frequency,
+          preferred_time: editForm.preferred_time,
         })
         .eq('user_id', user.id);
 
@@ -241,6 +269,15 @@ export default function ProfilePage() {
         fitness_goals: profile.fitness_goals || [],
         workout_styles: profile.workout_styles || [],
         gym: profile.gym || '',
+        bench_pr: profile.bench_pr || null,
+        squat_pr: profile.squat_pr || null,
+        deadlift_pr: profile.deadlift_pr || null,
+        overhead_press_pr: profile.overhead_press_pr || null,
+        body_weight: profile.body_weight || null,
+        workout_split: profile.workout_split || '',
+        years_training: profile.years_training || null,
+        weekly_frequency: profile.weekly_frequency || null,
+        preferred_time: profile.preferred_time || '',
       });
     }
     setIsEditing(false);
@@ -630,6 +667,176 @@ export default function ProfilePage() {
                         }`}
                       >
                         {style}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-gray-200 pt-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">💪 Personal Records (PRs)</h3>
+                  <p className="text-sm text-gray-600 mb-4">Track your 1RM (One Rep Max) in lbs</p>
+                </div>
+
+                {/* Body Weight */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Body Weight (lbs)
+                  </label>
+                  <input
+                    type="number"
+                    value={editForm.body_weight || ''}
+                    onChange={(e) => setEditForm({ ...editForm, body_weight: parseInt(e.target.value) || null })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
+                    placeholder="170"
+                  />
+                </div>
+
+                {/* PRs Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      🏋️ Bench Press
+                    </label>
+                    <input
+                      type="number"
+                      value={editForm.bench_pr || ''}
+                      onChange={(e) => setEditForm({ ...editForm, bench_pr: parseInt(e.target.value) || null })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
+                      placeholder="225 lbs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      🦵 Squat
+                    </label>
+                    <input
+                      type="number"
+                      value={editForm.squat_pr || ''}
+                      onChange={(e) => setEditForm({ ...editForm, squat_pr: parseInt(e.target.value) || null })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
+                      placeholder="315 lbs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      💪 Deadlift
+                    </label>
+                    <input
+                      type="number"
+                      value={editForm.deadlift_pr || ''}
+                      onChange={(e) => setEditForm({ ...editForm, deadlift_pr: parseInt(e.target.value) || null })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
+                      placeholder="405 lbs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      🔥 Overhead Press
+                    </label>
+                    <input
+                      type="number"
+                      value={editForm.overhead_press_pr || ''}
+                      onChange={(e) => setEditForm({ ...editForm, overhead_press_pr: parseInt(e.target.value) || null })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
+                      placeholder="135 lbs"
+                    />
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-gray-200 pt-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">📅 Training Details</h3>
+                </div>
+
+                {/* Workout Split */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Workout Split
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: 'PPL', label: 'Push/Pull/Legs' },
+                      { key: 'Upper/Lower', label: 'Upper/Lower' },
+                      { key: 'Bro Split', label: 'Bro Split' },
+                      { key: 'Full Body', label: 'Full Body' },
+                      { key: 'PHUL', label: 'PHUL' },
+                      { key: 'Custom', label: 'Custom' },
+                    ].map((split) => (
+                      <button
+                        key={split.key}
+                        type="button"
+                        onClick={() => setEditForm({ ...editForm, workout_split: split.key })}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          editForm.workout_split === split.key
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        {split.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Years Training + Weekly Frequency */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Years Training
+                    </label>
+                    <input
+                      type="number"
+                      value={editForm.years_training || ''}
+                      onChange={(e) => setEditForm({ ...editForm, years_training: parseInt(e.target.value) || null })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
+                      placeholder="3"
+                      min="0"
+                      max="50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Weekly Frequency
+                    </label>
+                    <select
+                      value={editForm.weekly_frequency || ''}
+                      onChange={(e) => setEditForm({ ...editForm, weekly_frequency: parseInt(e.target.value) || null })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
+                    >
+                      <option value="">Select...</option>
+                      <option value="3">3x/week</option>
+                      <option value="4">4x/week</option>
+                      <option value="5">5x/week</option>
+                      <option value="6">6x/week</option>
+                      <option value="7">7x/week</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Preferred Time */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Preferred Training Time
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: 'morning', label: '🌅 Morning (6-9am)' },
+                      { key: 'midday', label: '☀️ Midday (12-2pm)' },
+                      { key: 'evening', label: '🌆 Evening (5-8pm)' },
+                      { key: 'night', label: '🌙 Night (8-11pm)' },
+                    ].map((time) => (
+                      <button
+                        key={time.key}
+                        type="button"
+                        onClick={() => setEditForm({ ...editForm, preferred_time: time.key })}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          editForm.preferred_time === time.key
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        {time.label}
                       </button>
                     ))}
                   </div>
