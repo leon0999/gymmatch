@@ -42,6 +42,11 @@ interface OnboardingData {
   benchPress1RM: number | null;
   squat1RM: number | null;
   deadlift1RM: number | null;
+  overheadPress1RM: number | null;
+  bodyWeight: number | null;
+  workoutSplit: string;
+  yearsTraining: number | null;
+  weeklyFrequency: number | null;
   workoutTimePreference: string;
   currentGoal: string;
   workoutExperienceMonths: number | null;
@@ -83,6 +88,11 @@ export default function OnboardingPage() {
     benchPress1RM: null,
     squat1RM: null,
     deadlift1RM: null,
+    overheadPress1RM: null,
+    bodyWeight: null,
+    workoutSplit: '',
+    yearsTraining: null,
+    weeklyFrequency: null,
     workoutTimePreference: '',
     currentGoal: '',
     workoutExperienceMonths: null,
@@ -215,6 +225,12 @@ export default function OnboardingPage() {
           bench_press_1rm: formData.benchPress1RM,
           squat_1rm: formData.squat1RM,
           deadlift_1rm: formData.deadlift1RM,
+          overhead_press_pr: formData.overheadPress1RM,
+          body_weight: formData.bodyWeight,
+          workout_split: formData.workoutSplit,
+          years_training: formData.yearsTraining,
+          weekly_frequency: formData.weeklyFrequency,
+          preferred_time: formData.workoutTimePreference || null,
           workout_time_preference: formData.workoutTimePreference || null,
           current_goal: formData.currentGoal || null,
           workout_experience_months: formData.workoutExperienceMonths,
@@ -546,46 +562,138 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                {/* 3대 운동 1RM */}
+                {/* 체중 (상대 강도 계산용) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Body Weight (lbs) - Optional
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.bodyWeight || ''}
+                    onChange={(e) => updateField('bodyWeight', parseInt(e.target.value) || null)}
+                    placeholder="e.g., 180"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-600"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Helps calculate relative strength (bodyweight ratio)
+                  </p>
+                </div>
+
+                {/* 3대 운동 PR (1RM in lbs) */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Big 3 Lifts (1RM in kg) - Optional
+                    💪 Big 3 PR (1RM in lbs) - Optional but Recommended!
                   </label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs text-gray-600 mb-1">Bench Press</label>
+                      <label className="block text-xs text-gray-600 mb-1 font-medium">🏋️ Bench Press</label>
                       <input
                         type="number"
                         value={formData.benchPress1RM || ''}
                         onChange={(e) => updateField('benchPress1RM', parseInt(e.target.value) || null)}
-                        placeholder="100"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 text-gray-900"
+                        placeholder="225"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 text-gray-900 placeholder:text-gray-600"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-600 mb-1">Squat</label>
+                      <label className="block text-xs text-gray-600 mb-1 font-medium">🦵 Squat</label>
                       <input
                         type="number"
                         value={formData.squat1RM || ''}
                         onChange={(e) => updateField('squat1RM', parseInt(e.target.value) || null)}
-                        placeholder="120"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 text-gray-900"
+                        placeholder="315"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 text-gray-900 placeholder:text-gray-600"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-600 mb-1">Deadlift</label>
+                      <label className="block text-xs text-gray-600 mb-1 font-medium">💀 Deadlift</label>
                       <input
                         type="number"
                         value={formData.deadlift1RM || ''}
                         onChange={(e) => updateField('deadlift1RM', parseInt(e.target.value) || null)}
-                        placeholder="140"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 text-gray-900"
+                        placeholder="405"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 text-gray-900 placeholder:text-gray-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1 font-medium">🎯 Overhead Press</label>
+                      <input
+                        type="number"
+                        value={formData.overheadPress1RM || ''}
+                        onChange={(e) => updateField('overheadPress1RM', parseInt(e.target.value) || null)}
+                        placeholder="135"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 text-gray-900 placeholder:text-gray-600"
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Help partners match your strength level
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 Your PRs help us match you with partners at similar strength levels
                   </p>
+                </div>
+
+                {/* Workout Split (운동 루틴) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    What's your workout split?
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: 'PPL', label: 'Push/Pull/Legs' },
+                      { key: 'Upper/Lower', label: 'Upper/Lower' },
+                      { key: 'Bro Split', label: 'Bro Split' },
+                      { key: 'Full Body', label: 'Full Body' },
+                      { key: 'PHUL', label: 'PHUL' },
+                      { key: 'Custom', label: 'Custom' },
+                    ].map((split) => (
+                      <button
+                        key={split.key}
+                        onClick={() => updateField('workoutSplit', split.key)}
+                        className={`px-4 py-3 rounded-lg border-2 font-medium transition-colors ${
+                          formData.workoutSplit === split.key
+                            ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                            : 'border-gray-300 bg-white text-gray-700 hover:border-emerald-300'
+                        }`}
+                      >
+                        {split.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 운동 경력 (연 단위) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Training Experience (years)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.yearsTraining || ''}
+                    onChange={(e) => updateField('yearsTraining', parseInt(e.target.value) || null)}
+                    placeholder="e.g., 3"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-600"
+                  />
+                </div>
+
+                {/* 주간 운동 빈도 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    How many times per week do you train?
+                  </label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {[3, 4, 5, 6, 7].map((freq) => (
+                      <button
+                        key={freq}
+                        onClick={() => updateField('weeklyFrequency', freq)}
+                        className={`px-4 py-3 rounded-lg border-2 font-bold text-lg transition-colors ${
+                          formData.weeklyFrequency === freq
+                            ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                            : 'border-gray-300 bg-white text-gray-700 hover:border-emerald-300'
+                        }`}
+                      >
+                        {freq}x
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* 선호 운동 시간대 */}
