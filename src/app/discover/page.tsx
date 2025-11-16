@@ -794,10 +794,10 @@ export default function DiscoverPageV2() {
             {/* PR Stats - Big 3 + Big 3 Total */}
             {(currentMatch.bench_pr || currentMatch.squat_pr || currentMatch.deadlift_pr || currentMatch.big_three_total) && (
               <div className="mb-4">
-                {/* Big 3 Total Badge - Most Important! */}
+                {/* Big 3 Total with Progress Bar */}
                 {currentMatch.big_three_total && (
                   <div className="mb-3 backdrop-blur-md bg-gradient-to-r from-yellow-500/90 to-orange-500/90 rounded-2xl p-4 border-2 border-yellow-300/50 shadow-lg">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <span className="text-3xl">🏆</span>
                         <div>
@@ -812,32 +812,106 @@ export default function DiscoverPageV2() {
                         </div>
                       )}
                     </div>
+
+                    {/* Progress Bar to 1000 Club */}
+                    {currentMatch.big_three_total < 1000 && (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-white/80 font-medium">
+                          <span>Progress to 1000 Club</span>
+                          <span>{Math.round((currentMatch.big_three_total / 1000) * 100)}%</span>
+                        </div>
+                        <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="bg-white h-full rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min((currentMatch.big_three_total / 1000) * 100, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {currentMatch.big_three_total >= 1000 && currentMatch.big_three_total < 1500 && (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-white/80 font-medium">
+                          <span>Progress to 1500 Elite</span>
+                          <span>{Math.round(((currentMatch.big_three_total - 1000) / 500) * 100)}%</span>
+                        </div>
+                        <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="bg-white h-full rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(((currentMatch.big_three_total - 1000) / 500) * 100, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {currentMatch.big_three_total >= 1500 && (
+                      <div className="text-center text-white/90 text-sm font-bold animate-pulse">
+                        ⭐ Elite Powerlifter ⭐
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Individual PRs Grid */}
+                {/* Individual PRs Grid with Strength Level Badges */}
                 <div className="grid grid-cols-3 gap-2">
-                  {currentMatch.bench_pr && (
-                    <div className="backdrop-blur-md bg-white/10 rounded-xl p-2.5 border border-white/20 text-center">
-                      <div className="text-lg mb-0.5">🏋️</div>
-                      <div className="text-white font-bold text-base">{currentMatch.bench_pr}</div>
-                      <div className="text-white/70 text-xs">Bench</div>
-                    </div>
-                  )}
-                  {currentMatch.squat_pr && (
-                    <div className="backdrop-blur-md bg-white/10 rounded-xl p-2.5 border border-white/20 text-center">
-                      <div className="text-lg mb-0.5">🦵</div>
-                      <div className="text-white font-bold text-base">{currentMatch.squat_pr}</div>
-                      <div className="text-white/70 text-xs">Squat</div>
-                    </div>
-                  )}
-                  {currentMatch.deadlift_pr && (
-                    <div className="backdrop-blur-md bg-white/10 rounded-xl p-2.5 border border-white/20 text-center">
-                      <div className="text-lg mb-0.5">💪</div>
-                      <div className="text-white font-bold text-base">{currentMatch.deadlift_pr}</div>
-                      <div className="text-white/70 text-xs">Deadlift</div>
-                    </div>
-                  )}
+                  {currentMatch.bench_pr && currentMatch.body_weight && (() => {
+                    const ratio = currentMatch.bench_pr / currentMatch.body_weight;
+                    let level = 'Beginner';
+                    let badgeColor = 'bg-gray-500';
+                    if (ratio >= 2.0) { level = 'Elite'; badgeColor = 'bg-purple-500'; }
+                    else if (ratio >= 1.5) { level = 'Advanced'; badgeColor = 'bg-red-500'; }
+                    else if (ratio >= 1.0) { level = 'Intermediate'; badgeColor = 'bg-orange-500'; }
+                    else if (ratio >= 0.75) { level = 'Novice'; badgeColor = 'bg-yellow-500'; }
+
+                    return (
+                      <div className="backdrop-blur-md bg-white/10 rounded-xl p-2.5 border border-white/20 text-center relative">
+                        <div className={`absolute -top-1.5 left-1/2 -translate-x-1/2 ${badgeColor} text-white text-xs px-2 py-0.5 rounded-full font-bold shadow-lg`}>
+                          {level}
+                        </div>
+                        <div className="text-lg mb-0.5 mt-1">🏋️</div>
+                        <div className="text-white font-bold text-base">{currentMatch.bench_pr}</div>
+                        <div className="text-white/70 text-xs">Bench</div>
+                      </div>
+                    );
+                  })()}
+                  {currentMatch.squat_pr && currentMatch.body_weight && (() => {
+                    const ratio = currentMatch.squat_pr / currentMatch.body_weight;
+                    let level = 'Beginner';
+                    let badgeColor = 'bg-gray-500';
+                    if (ratio >= 2.5) { level = 'Elite'; badgeColor = 'bg-purple-500'; }
+                    else if (ratio >= 2.0) { level = 'Advanced'; badgeColor = 'bg-red-500'; }
+                    else if (ratio >= 1.5) { level = 'Intermediate'; badgeColor = 'bg-orange-500'; }
+                    else if (ratio >= 1.0) { level = 'Novice'; badgeColor = 'bg-yellow-500'; }
+
+                    return (
+                      <div className="backdrop-blur-md bg-white/10 rounded-xl p-2.5 border border-white/20 text-center relative">
+                        <div className={`absolute -top-1.5 left-1/2 -translate-x-1/2 ${badgeColor} text-white text-xs px-2 py-0.5 rounded-full font-bold shadow-lg`}>
+                          {level}
+                        </div>
+                        <div className="text-lg mb-0.5 mt-1">🦵</div>
+                        <div className="text-white font-bold text-base">{currentMatch.squat_pr}</div>
+                        <div className="text-white/70 text-xs">Squat</div>
+                      </div>
+                    );
+                  })()}
+                  {currentMatch.deadlift_pr && currentMatch.body_weight && (() => {
+                    const ratio = currentMatch.deadlift_pr / currentMatch.body_weight;
+                    let level = 'Beginner';
+                    let badgeColor = 'bg-gray-500';
+                    if (ratio >= 2.75) { level = 'Elite'; badgeColor = 'bg-purple-500'; }
+                    else if (ratio >= 2.25) { level = 'Advanced'; badgeColor = 'bg-red-500'; }
+                    else if (ratio >= 1.75) { level = 'Intermediate'; badgeColor = 'bg-orange-500'; }
+                    else if (ratio >= 1.25) { level = 'Novice'; badgeColor = 'bg-yellow-500'; }
+
+                    return (
+                      <div className="backdrop-blur-md bg-white/10 rounded-xl p-2.5 border border-white/20 text-center relative">
+                        <div className={`absolute -top-1.5 left-1/2 -translate-x-1/2 ${badgeColor} text-white text-xs px-2 py-0.5 rounded-full font-bold shadow-lg`}>
+                          {level}
+                        </div>
+                        <div className="text-lg mb-0.5 mt-1">💪</div>
+                        <div className="text-white font-bold text-base">{currentMatch.deadlift_pr}</div>
+                        <div className="text-white/70 text-xs">Deadlift</div>
+                      </div>
+                    );
+                  })()}
                   {currentMatch.overhead_press_pr && (
                     <div className="backdrop-blur-md bg-white/10 rounded-xl p-2.5 border border-white/20 text-center">
                       <div className="text-lg mb-0.5">🔥</div>
@@ -845,6 +919,61 @@ export default function DiscoverPageV2() {
                       <div className="text-white/70 text-xs">OHP</div>
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Weekly Schedule Calendar */}
+            {currentMatch.workout_split && currentMatch.weekly_frequency && (
+              <div className="mb-3 backdrop-blur-md bg-white/10 rounded-2xl p-3 border border-white/20">
+                <div className="text-white/80 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <span>📅</span>
+                  <span>Weekly Schedule</span>
+                </div>
+                <div className="grid grid-cols-7 gap-1.5">
+                  {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => {
+                    const isWorkoutDay = idx < currentMatch.weekly_frequency!;
+
+                    // PPL pattern: Push, Pull, Legs, Push, Pull, Legs, Rest
+                    let splitEmoji = '💪';
+                    if (currentMatch.workout_split === 'PPL') {
+                      const cycle = idx % 6;
+                      if (cycle === 0 || cycle === 3) splitEmoji = '⬆️'; // Push
+                      else if (cycle === 1 || cycle === 4) splitEmoji = '⬇️'; // Pull
+                      else if (cycle === 2 || cycle === 5) splitEmoji = '🦵'; // Legs
+                    } else if (currentMatch.workout_split === 'Upper/Lower') {
+                      splitEmoji = idx % 2 === 0 ? '⬆️' : '⬇️';
+                    } else if (currentMatch.workout_split === 'Bro Split') {
+                      const muscles = ['💪', '🦵', '🔥', '🏋️', '⚡'];
+                      splitEmoji = muscles[idx % 5];
+                    } else if (currentMatch.workout_split === 'Full Body') {
+                      splitEmoji = '🏋️';
+                    }
+
+                    return (
+                      <div
+                        key={idx}
+                        className={`
+                          aspect-square rounded-lg flex flex-col items-center justify-center text-xs
+                          ${isWorkoutDay
+                            ? 'bg-emerald-500/90 text-white font-bold shadow-lg'
+                            : 'bg-white/20 text-white/50'
+                          }
+                        `}
+                      >
+                        <div className="text-xs">{day}</div>
+                        {isWorkoutDay && (
+                          <div className="text-base">{splitEmoji}</div>
+                        )}
+                        {!isWorkoutDay && (
+                          <div className="text-sm">😴</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-2 text-center text-white/70 text-xs">
+                  {currentMatch.workout_split} • {currentMatch.weekly_frequency}x/week
                 </div>
               </div>
             )}
