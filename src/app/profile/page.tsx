@@ -548,7 +548,7 @@ export default function ProfilePage() {
                       type="text"
                       value={editForm.name}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent placeholder:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                       placeholder="Your name"
                     />
                   </div>
@@ -560,7 +560,7 @@ export default function ProfilePage() {
                       type="number"
                       value={editForm.age || ''}
                       onChange={(e) => setEditForm({ ...editForm, age: parseInt(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent placeholder:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                       placeholder="Age"
                       min="18"
                       max="100"
@@ -577,7 +577,7 @@ export default function ProfilePage() {
                     type="text"
                     value={editForm.location_name}
                     onChange={(e) => setEditForm({ ...editForm, location_name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent placeholder:text-gray-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                     placeholder="City, State"
                   />
                 </div>
@@ -591,7 +591,7 @@ export default function ProfilePage() {
                     type="text"
                     value={editForm.gym}
                     onChange={(e) => setEditForm({ ...editForm, gym: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent placeholder:text-gray-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                     placeholder="Your gym name"
                   />
                 </div>
@@ -604,7 +604,7 @@ export default function ProfilePage() {
                   <textarea
                     value={editForm.bio}
                     onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent placeholder:text-gray-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                     placeholder="Tell others about yourself..."
                     rows={3}
                   />
@@ -687,7 +687,7 @@ export default function ProfilePage() {
                     type="number"
                     value={editForm.body_weight || ''}
                     onChange={(e) => setEditForm({ ...editForm, body_weight: parseInt(e.target.value) || null })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent placeholder:text-gray-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                     placeholder="170"
                   />
                 </div>
@@ -702,7 +702,7 @@ export default function ProfilePage() {
                       type="number"
                       value={editForm.bench_pr || ''}
                       onChange={(e) => setEditForm({ ...editForm, bench_pr: parseInt(e.target.value) || null })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent placeholder:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                       placeholder="225 lbs"
                     />
                   </div>
@@ -714,7 +714,7 @@ export default function ProfilePage() {
                       type="number"
                       value={editForm.squat_pr || ''}
                       onChange={(e) => setEditForm({ ...editForm, squat_pr: parseInt(e.target.value) || null })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent placeholder:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                       placeholder="315 lbs"
                     />
                   </div>
@@ -726,7 +726,7 @@ export default function ProfilePage() {
                       type="number"
                       value={editForm.deadlift_pr || ''}
                       onChange={(e) => setEditForm({ ...editForm, deadlift_pr: parseInt(e.target.value) || null })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent placeholder:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                       placeholder="405 lbs"
                     />
                   </div>
@@ -738,7 +738,7 @@ export default function ProfilePage() {
                       type="number"
                       value={editForm.overhead_press_pr || ''}
                       onChange={(e) => setEditForm({ ...editForm, overhead_press_pr: parseInt(e.target.value) || null })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent placeholder:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                       placeholder="135 lbs"
                     />
                   </div>
@@ -789,7 +789,7 @@ export default function ProfilePage() {
                       type="number"
                       value={editForm.years_training || ''}
                       onChange={(e) => setEditForm({ ...editForm, years_training: parseInt(e.target.value) || null })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent placeholder:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                       placeholder="3"
                       min="0"
                       max="50"
@@ -802,7 +802,7 @@ export default function ProfilePage() {
                     <select
                       value={editForm.weekly_frequency || ''}
                       onChange={(e) => setEditForm({ ...editForm, weekly_frequency: parseInt(e.target.value) || null })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent placeholder:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                     >
                       <option value="">Select...</option>
                       <option value="3">3x/week</option>
