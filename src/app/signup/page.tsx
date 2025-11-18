@@ -91,15 +91,15 @@ export default function SignUpPage() {
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* Header */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block mb-6">
-            <h1 className="text-4xl font-bold">
-              Gym<span className="text-teal-600">Match</span>
+        <div className="text-center mb-10">
+          <Link href="/" className="inline-block mb-8">
+            <h1 className="text-5xl font-extrabold">
+              Gym<span className="bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">Match</span>
             </h1>
           </Link>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome! 👋</h2>
-          <p className="text-gray-600">
-            Create your account to find your perfect gym partner
+          <h2 className="text-4xl font-bold text-gray-900 mb-3">Create Account</h2>
+          <p className="text-lg text-gray-600">
+            Join and find your perfect gym partner
           </p>
         </div>
 
@@ -159,13 +159,13 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`w-full px-6 py-4 text-white text-lg font-semibold rounded-lg transition-colors shadow-lg ${
+              className={`w-full px-6 py-4 text-white text-xl font-bold rounded-xl transition-all shadow-xl ${
                 isSubmitting
                   ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-teal-600 hover:bg-teal-700'
+                  : 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 hover:scale-105 transform'
               }`}
             >
-              {isSubmitting ? 'Creating Account...' : 'Create Account →'}
+              {isSubmitting ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 
