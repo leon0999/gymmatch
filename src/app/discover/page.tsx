@@ -89,6 +89,8 @@ export default function DiscoverPageV2() {
       if (!profile.today_workout_focus || lastUpdated !== today) {
         // Show popup to select today's workout focus
         setShowWorkoutPopup(true);
+        // Set default to 'any' so loading can start
+        setTodayFocus('any');
       } else {
         // Already selected today
         setTodayFocus(profile.today_workout_focus);
