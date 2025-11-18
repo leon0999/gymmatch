@@ -220,20 +220,44 @@ export default function DiscoverPageV2() {
       // Calculate match scores using advanced algorithm (225 points max)
       const scored = await Promise.all(
         filteredProfiles.map(async (match) => {
-          // Call database function for advanced scoring
-          const { data: scoreData } = await supabase.rpc('calculate_advanced_match_score', {
-            my_user_id: user.id,
-            other_user_id: match.user_id,
-          });
+          try {
+            // Call database function for advanced scoring
+            const { data: scoreData, error } = await supabase.rpc('calculate_advanced_match_score', {
+              my_user_id: user.id,
+              other_user_id: match.user_id,
+            });
 
-          const matchScore = scoreData || 0;
+            if (error) {
+              console.error('RPC error for user', match.user_id, ':', error);
+              // Fallback to client-side scoring
+              const fallbackScore = calculateClientSideScore(profile, match);
+              return {
+                ...match,
+                matchScore: fallbackScore,
+                distance: calculateSimpleDistance(profile, match),
+                matchReasons: getMatchReasons(profile, match),
+              };
+            }
 
-          return {
-            ...match,
-            matchScore,
-            distance: calculateSimpleDistance(profile, match),
-            matchReasons: getAdvancedMatchReasons(profile, match, matchScore),
-          };
+            const matchScore = scoreData || 0;
+
+            return {
+              ...match,
+              matchScore,
+              distance: calculateSimpleDistance(profile, match),
+              matchReasons: getAdvancedMatchReasons(profile, match, matchScore),
+            };
+          } catch (err) {
+            console.error('Failed to calculate score for user', match.user_id, ':', err);
+            // Fallback to client-side scoring
+            const fallbackScore = calculateClientSideScore(profile, match);
+            return {
+              ...match,
+              matchScore: fallbackScore,
+              distance: calculateSimpleDistance(profile, match),
+              matchReasons: getMatchReasons(profile, match),
+            };
+          }
         })
       );
 
@@ -272,8 +296,72 @@ export default function DiscoverPageV2() {
     }
   };
 
-  // Legacy function - kept for reference but not used anymore
-  // Now using calculate_advanced_match_score() from database (225 points max)
+  // Client-side scoring fallback (when RPC fails)
+  const calculateClientSideScore = (user: Profile, match: Profile): number => {
+    let score = 0;
+
+    // 1. Same today's workout focus (+50)
+    const today = new Date().toDateString();
+    const userUpdatedToday = user.workout_focus_updated_at
+      ? new Date(user.workout_focus_updated_at).toDateString() === today
+      : false;
+    const matchUpdatedToday = match.workout_focus_updated_at
+      ? new Date(match.workout_focus_updated_at).toDateString() === today
+      : false;
+
+    if (user.today_workout_focus && match.today_workout_focus &&
+        user.today_workout_focus === match.today_workout_focus &&
+        userUpdatedToday && matchUpdatedToday) {
+      score += 50;
+    }
+
+    // 2. Same workout split (+30)
+    if (user.workout_split && match.workout_split && user.workout_split === match.workout_split) {
+      score += 30;
+    }
+
+    // 3. Similar PRs (+20 each)
+    if (user.bench_pr && match.bench_pr && Math.abs(user.bench_pr - match.bench_pr) <= 45) {
+      score += 20;
+    }
+    if (user.squat_pr && match.squat_pr && Math.abs(user.squat_pr - match.squat_pr) <= 45) {
+      score += 20;
+    }
+    if (user.deadlift_pr && match.deadlift_pr && Math.abs(user.deadlift_pr - match.deadlift_pr) <= 45) {
+      score += 20;
+    }
+
+    // 4. Same gym (+30)
+    if (user.gym_name && match.gym_name && user.gym_name === match.gym_name) {
+      score += 30;
+    }
+
+    // 5. Same preferred time (+15)
+    if (user.preferred_time && match.preferred_time && user.preferred_time === match.preferred_time) {
+      score += 15;
+    }
+
+    // 6. Similar weekly frequency (+10)
+    if (user.weekly_frequency && match.weekly_frequency &&
+        Math.abs(user.weekly_frequency - match.weekly_frequency) <= 1) {
+      score += 10;
+    }
+
+    // 7. Same fitness level (+10)
+    if (user.fitness_level === match.fitness_level) {
+      score += 10;
+    }
+
+    // 8. Preferred gender match (+10)
+    const userPreferredGender = user.preferred_gender || 'any';
+    const matchPreferredGender = match.preferred_gender || 'any';
+    if ((userPreferredGender === 'any' || userPreferredGender === match.gender) &&
+        (matchPreferredGender === 'any' || matchPreferredGender === user.gender)) {
+      score += 10;
+    }
+
+    return score;
+  };
 
   const calculateSimpleDistance = (user: Profile, match: Profile): number => {
     // MVP: Same city = 1 mile, different = 5 miles
