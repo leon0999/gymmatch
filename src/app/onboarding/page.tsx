@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation';
 import { POPULAR_GYMS, FITNESS_LEVELS, FITNESS_GOALS, WORKOUT_STYLES } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 interface OnboardingData {
   // Step 0: Account Creation
@@ -139,7 +139,7 @@ export default function OnboardingPage() {
     setCurrentUser(user);
   };
 
-  const totalSteps = 6;
+  const totalSteps = 5;
   const progress = (currentStep / totalSteps) * 100;
 
   const handleNext = () => {
@@ -151,7 +151,7 @@ export default function OnboardingPage() {
 
     // Clear error and proceed
     setError(null);
-    if (currentStep < 6) {
+    if (currentStep < 5) {
       setCurrentStep((currentStep + 1) as Step);
     }
   };
@@ -952,90 +952,6 @@ export default function OnboardingPage() {
               </div>
             </div>
           )}
-
-          {/* Step 6: Preferences */}
-          {currentStep === 6 && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                Who are you looking to match with?
-              </h2>
-
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Partner Gender Preference
-                  </label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { value: 'same', label: 'Same as me' },
-                      { value: 'opposite', label: 'Opposite' },
-                      { value: 'any', label: 'Any gender' },
-                    ].map((pref) => (
-                      <button
-                        key={pref.value}
-                        onClick={() => updateField('partnerGender', pref.value)}
-                        className={`px-4 py-3 rounded-lg border-2 font-medium transition-colors ${
-                          formData.partnerGender === pref.value
-                            ? 'border-teal-600 bg-teal-50 text-teal-700'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-teal-300'
-                        }`}
-                      >
-                        {pref.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Age Range: {formData.ageRangeMin} - {formData.ageRangeMax} years
-                  </label>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="text-xs text-gray-500 mb-2">Minimum age: {formData.ageRangeMin}</div>
-                      <input
-                        type="range"
-                        min="18"
-                        max="65"
-                        value={formData.ageRangeMin}
-                        onChange={(e) => updateField('ageRangeMin', parseInt(e.target.value))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-600 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-teal-600 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
-                      />
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-2">Maximum age: {formData.ageRangeMax}</div>
-                      <input
-                        type="range"
-                        min="18"
-                        max="65"
-                        value={formData.ageRangeMax}
-                        onChange={(e) => updateField('ageRangeMax', parseInt(e.target.value))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-600 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-teal-600 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Maximum Distance: {formData.maxDistance} miles
-                  </label>
-                  <input
-                    type="range"
-                    min="1"
-                    max="25"
-                    value={formData.maxDistance}
-                    onChange={(e) => updateField('maxDistance', parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-600 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-teal-600 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-2">
-                    <span>1 mile</span>
-                    <span>25 miles</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Navigation Buttons */}
@@ -1051,10 +967,10 @@ export default function OnboardingPage() {
             <div />
           )}
 
-          {currentStep < 6 ? (
+          {currentStep < 5 ? (
             <button
               onClick={handleNext}
-              className="px-8 py-3 bg-teal-600 text-white font-semibold rounded-full hover:bg-teal-700 transition-colors shadow-lg"
+              className="px-8 py-3 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold rounded-xl hover:from-teal-700 hover:to-emerald-700 transition-all shadow-xl hover:scale-105 transform"
             >
               Continue
             </button>
@@ -1062,10 +978,10 @@ export default function OnboardingPage() {
             <button
               onClick={handleComplete}
               disabled={isSubmitting}
-              className={`px-8 py-3 text-white font-semibold rounded-full transition-colors shadow-lg ${
+              className={`px-10 py-4 text-white text-lg font-bold rounded-xl transition-all shadow-2xl ${
                 isSubmitting
                   ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-teal-600 hover:bg-teal-700'
+                  : 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 hover:scale-105 transform'
               }`}
             >
               {isSubmitting ? 'Creating Profile...' : 'Complete Profile'}
