@@ -225,17 +225,18 @@ export default function OnboardingPage() {
           age: formData.age,
           gender: formData.gender,
           bio: formData.bio || `Looking for a dedicated gym partner to train together ${formData.workoutDays.length || 3}x per week. Let's motivate each other and reach our fitness goals!`,
+          photo_url: formData.photoUrl || null,  // FIXED: Add photo URL
           location: formData.location,
           gym_name: formData.gym || null,
           fitness_level: formData.fitnessLevel,
           fitness_goals: formData.goals,
           workout_styles: formData.workoutStyles,
-          // NEW: Workout Details
+          // NEW: Workout Details (FIXED: Correct column names)
           today_workout_part: formData.todayWorkoutPart || null,
           main_exercises: formData.mainExercises,
-          bench_press_1rm: formData.benchPress1RM,
-          squat_1rm: formData.squat1RM,
-          deadlift_1rm: formData.deadlift1RM,
+          bench_pr: formData.benchPress1RM,  // FIXED: bench_pr not bench_press_1rm
+          squat_pr: formData.squat1RM,  // FIXED: squat_pr not squat_1rm
+          deadlift_pr: formData.deadlift1RM,  // FIXED: deadlift_pr not deadlift_1rm
           overhead_press_pr: formData.overheadPress1RM,
           body_weight: formData.bodyWeight,
           workout_split: formData.workoutSplit,
