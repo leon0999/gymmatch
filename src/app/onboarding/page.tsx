@@ -57,6 +57,7 @@ interface OnboardingData {
 
   // Step 5: Photos & Bio
   bio: string;
+  photoUrl: string;
 
   // Step 6: Preferences
   partnerGender: 'same' | 'any' | 'opposite' | '';
@@ -69,6 +70,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [formData, setFormData] = useState<OnboardingData>({
@@ -100,6 +102,7 @@ export default function OnboardingPage() {
     workoutDays: [],
     preferredTime: '',
     bio: '',
+    photoUrl: '',
     partnerGender: '',
     ageRangeMin: 22,
     ageRangeMax: 35,
@@ -140,6 +143,14 @@ export default function OnboardingPage() {
   const progress = (currentStep / totalSteps) * 100;
 
   const handleNext = () => {
+    // Validate Step 5: Photo is required
+    if (currentStep === 5 && !formData.photoUrl) {
+      setError('Please upload a profile photo showing your face');
+      return;
+    }
+
+    // Clear error and proceed
+    setError(null);
     if (currentStep < 6) {
       setCurrentStep((currentStep + 1) as Step);
     }
@@ -261,6 +272,65 @@ export default function OnboardingPage() {
 
   const updateField = (field: keyof OnboardingData, value: any) => {
     setFormData({ ...formData, [field]: value });
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true);
+      setError(null);
+
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please upload an image file');
+        return;
+      }
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image must be less than 5MB');
+        return;
+      }
+
+      if (!currentUser) {
+        setError('Please sign up first');
+        return;
+      }
+
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        setError('Failed to upload photo: ' + uploadError.message);
+        return;
+      }
+
+      // Get public URL
+      const { data } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(fileName);
+
+      // Update form data
+      updateField('photoUrl', data.publicUrl);
+
+    } catch (err: any) {
+      console.error('Error uploading photo:', err);
+      setError('Something went wrong');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const toggleArrayItem = (field: 'goals' | 'workoutStyles' | 'workoutDays', item: string) => {
@@ -805,14 +875,63 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 5: Bio */}
+          {/* Step 5: Photo & Bio */}
           {currentStep === 5 && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                Tell potential partners about yourself
+                Add your profile photo
               </h2>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
+                {/* Photo Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Profile Photo * (Required - must show your face)
+                  </label>
+
+                  <div className="flex flex-col items-center gap-4">
+                    {/* Photo Preview */}
+                    {formData.photoUrl ? (
+                      <div className="relative">
+                        <img
+                          src={formData.photoUrl}
+                          alt="Profile preview"
+                          className="w-40 h-40 rounded-full object-cover border-4 border-emerald-500"
+                        />
+                        <button
+                          onClick={() => updateField('photoUrl', '')}
+                          className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-40 h-40 rounded-full bg-gray-200 border-4 border-dashed border-gray-300 flex items-center justify-center">
+                        <span className="text-4xl">📷</span>
+                      </div>
+                    )}
+
+                    {/* Upload Button */}
+                    <label className="cursor-pointer">
+                      <div className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold">
+                        {uploading ? 'Uploading...' : formData.photoUrl ? 'Change Photo' : 'Upload Photo'}
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        disabled={uploading}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <p className="text-sm text-gray-500 text-center max-w-xs">
+                      Upload a clear photo showing your face. This helps potential partners recognize you at the gym!
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bio */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Bio (20-300 characters)
@@ -823,17 +942,10 @@ export default function OnboardingPage() {
                     placeholder="Looking for a consistent workout partner to hit the gym 3-4x/week. Love powerlifting and trying new protein shakes!"
                     rows={6}
                     maxLength={300}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent resize-none text-gray-900 placeholder:text-gray-600"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent resize-none text-gray-900 placeholder:text-gray-500"
                   />
                   <p className="text-sm text-gray-500 mt-1">
                     {formData.bio.length}/300 characters
-                  </p>
-                </div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800">
-                    <strong>Photo Upload Coming Soon!</strong> For now, we'll use a default
-                    avatar. You'll be able to add photos in the next update.
                   </p>
                 </div>
               </div>

@@ -522,24 +522,9 @@ export default function DiscoverPageV2() {
 
     const match = matches[currentIndex];
 
-    try {
-      // Record pass in database (so they don't show up again)
-      const { error } = await supabase.from('likes').insert({
-        from_user_id: currentUser.user_id,
-        to_user_id: match.user_id,
-        is_pass: true, // Mark as pass (not a like)
-      });
+    console.log('❌ Passed:', match.name);
 
-      if (error) {
-        console.error('Error recording pass:', error);
-      } else {
-        console.log('❌ Passed:', match.name);
-      }
-    } catch (err) {
-      console.error('Error in handlePass:', err);
-    }
-
-    // Move to next
+    // Move to next (we don't record passes, just skip)
     setCurrentIndex(currentIndex + 1);
   };
 
