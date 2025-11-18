@@ -101,19 +101,25 @@ export default function DiscoverPageV2() {
   };
 
   const loadMatches = async () => {
+    console.log('🚀 loadMatches() started');
     try {
       setLoading(true);
       setError(null);
 
       // Get current user
+      console.log('👤 Getting current user...');
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
+        console.log('❌ No user found, redirecting to onboarding');
         router.push('/onboarding');
         return;
       }
 
+      console.log('✅ User found:', user.id);
+
       // Get current user's profile
+      console.log('📋 Fetching user profile...');
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -121,13 +127,16 @@ export default function DiscoverPageV2() {
         .single();
 
       if (profileError || !profile) {
+        console.error('❌ Profile error:', profileError);
         setError('Could not load your profile');
         return;
       }
 
+      console.log('✅ Profile loaded:', profile.name);
       setCurrentUser(profile);
 
       // Get users already liked or passed
+      console.log('💚 Fetching liked users...');
       const { data: likedUsers } = await supabase
         .from('likes')
         .select('to_user_id')
@@ -136,8 +145,10 @@ export default function DiscoverPageV2() {
       const likedUserIds = new Set(
         (likedUsers || []).map((s) => s.to_user_id)
       );
+      console.log('✅ Liked users:', likedUserIds.size);
 
       // Get all other profiles (excluding self and already liked)
+      console.log('👥 Fetching all other profiles...');
       const { data: allProfiles, error: matchError } = await supabase
         .from('profiles')
         .select('*')
@@ -217,49 +228,21 @@ export default function DiscoverPageV2() {
         console.warn('⚠️ No profiles match your preferences!');
       }
 
-      // Calculate match scores using advanced algorithm (225 points max)
-      const scored = await Promise.all(
-        filteredProfiles.map(async (match) => {
-          try {
-            // Call database function for advanced scoring
-            const { data: scoreData, error } = await supabase.rpc('calculate_advanced_match_score', {
-              my_user_id: user.id,
-              other_user_id: match.user_id,
-            });
+      // Calculate match scores using client-side algorithm (225 points max)
+      // Note: Using client-side scoring for speed and reliability
+      console.log('🔢 Calculating match scores for', filteredProfiles.length, 'profiles...');
+      const scored = filteredProfiles.map((match, index) => {
+        const matchScore = calculateClientSideScore(profile, match);
+        console.log(`  [${index + 1}/${filteredProfiles.length}] ${match.name}: ${matchScore} points`);
 
-            if (error) {
-              console.error('RPC error for user', match.user_id, ':', error);
-              // Fallback to client-side scoring
-              const fallbackScore = calculateClientSideScore(profile, match);
-              return {
-                ...match,
-                matchScore: fallbackScore,
-                distance: calculateSimpleDistance(profile, match),
-                matchReasons: getMatchReasons(profile, match),
-              };
-            }
-
-            const matchScore = scoreData || 0;
-
-            return {
-              ...match,
-              matchScore,
-              distance: calculateSimpleDistance(profile, match),
-              matchReasons: getAdvancedMatchReasons(profile, match, matchScore),
-            };
-          } catch (err) {
-            console.error('Failed to calculate score for user', match.user_id, ':', err);
-            // Fallback to client-side scoring
-            const fallbackScore = calculateClientSideScore(profile, match);
-            return {
-              ...match,
-              matchScore: fallbackScore,
-              distance: calculateSimpleDistance(profile, match),
-              matchReasons: getMatchReasons(profile, match),
-            };
-          }
-        })
-      );
+        return {
+          ...match,
+          matchScore,
+          distance: calculateSimpleDistance(profile, match),
+          matchReasons: getMatchReasons(profile, match),
+        };
+      });
+      console.log('✅ All scores calculated!');
 
       // Sort by today's workout focus priority + score
       scored.sort((a, b) => {
