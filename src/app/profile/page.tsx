@@ -34,7 +34,8 @@ export default function ProfilePage() {
     fitness_level: '' as 'beginner' | 'intermediate' | 'advanced',
     fitness_goals: [] as string[],
     workout_styles: [] as string[],
-    gym: '',
+    gym_name: '',
+    photo_url: '',
     // PR and Workout Details
     bench_pr: null as number | null,
     squat_pr: null as number | null,
@@ -98,7 +99,8 @@ export default function ProfilePage() {
         fitness_level: data.fitness_level || 'beginner',
         fitness_goals: data.fitness_goals || [],
         workout_styles: data.workout_styles || [],
-        gym: data.gym || '',
+        gym_name: data.gym_name || '',
+        photo_url: data.photo_url || '',
         bench_pr: data.bench_pr || null,
         squat_pr: data.squat_pr || null,
         deadlift_pr: data.deadlift_pr || null,
@@ -226,7 +228,8 @@ export default function ProfilePage() {
           fitness_level: editForm.fitness_level,
           fitness_goals: editForm.fitness_goals,
           workout_styles: editForm.workout_styles,
-          gym: editForm.gym.trim(),
+          gym_name: editForm.gym_name.trim(),
+          photo_url: editForm.photo_url,
           bench_pr: editForm.bench_pr,
           squat_pr: editForm.squat_pr,
           deadlift_pr: editForm.deadlift_pr,
@@ -268,7 +271,8 @@ export default function ProfilePage() {
         fitness_level: profile.fitness_level || 'beginner',
         fitness_goals: profile.fitness_goals || [],
         workout_styles: profile.workout_styles || [],
-        gym: profile.gym || '',
+        gym_name: profile.gym_name || '',
+        photo_url: profile.photo_url || '',
         bench_pr: profile.bench_pr || null,
         squat_pr: profile.squat_pr || null,
         deadlift_pr: profile.deadlift_pr || null,
@@ -589,8 +593,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="text"
-                    value={editForm.gym}
-                    onChange={(e) => setEditForm({ ...editForm, gym: e.target.value })}
+                    value={editForm.gym_name}
+                    onChange={(e) => setEditForm({ ...editForm, gym_name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                     placeholder="Your gym name"
                   />
@@ -674,7 +678,7 @@ export default function ProfilePage() {
 
                 {/* Divider */}
                 <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">💪 Personal Records (PRs)</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Personal Records (PRs)</h3>
                   <p className="text-sm text-gray-600 mb-4">Track your 1RM (One Rep Max) in lbs</p>
                 </div>
 
@@ -696,7 +700,7 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      🏋️ Bench Press
+                      Bench Press
                     </label>
                     <input
                       type="number"
@@ -708,7 +712,7 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      🦵 Squat
+                      Squat
                     </label>
                     <input
                       type="number"
@@ -720,7 +724,7 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      💪 Deadlift
+                      Deadlift
                     </label>
                     <input
                       type="number"
@@ -732,7 +736,7 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      🔥 Overhead Press
+                      Overhead Press
                     </label>
                     <input
                       type="number"
@@ -746,7 +750,7 @@ export default function ProfilePage() {
 
                 {/* Divider */}
                 <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">📅 Training Details</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Training Details</h3>
                 </div>
 
                 {/* Workout Split */}
