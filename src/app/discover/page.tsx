@@ -807,8 +807,8 @@ export default function DiscoverPageV2() {
               </div>
             </div>
 
-            {/* PR Stats - Big 3 + Big 3 Total */}
-            {(currentMatch.bench_pr || currentMatch.squat_pr || currentMatch.deadlift_pr || currentMatch.big_three_total) && (
+            {/* PR Stats - HIDDEN for cleaner UI */}
+            {false && (currentMatch.bench_pr || currentMatch.squat_pr || currentMatch.deadlift_pr || currentMatch.big_three_total) && (
               <div className="mb-4">
                 {/* Big 3 Total with Progress Bar */}
                 {currentMatch.big_three_total && (
@@ -939,8 +939,8 @@ export default function DiscoverPageV2() {
               </div>
             )}
 
-            {/* Weekly Schedule Calendar */}
-            {currentMatch.workout_split && currentMatch.weekly_frequency && (
+            {/* Weekly Schedule Calendar - HIDDEN for cleaner UI */}
+            {false && currentMatch.workout_split && currentMatch.weekly_frequency && (
               <div className="mb-3 backdrop-blur-md bg-white/10 rounded-2xl p-3 border border-white/20">
                 <div className="text-white/80 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   <span>📅</span>
@@ -996,78 +996,33 @@ export default function DiscoverPageV2() {
 
             {/* Workout Details Row */}
             <div className="flex flex-wrap gap-2 mb-3">
-              {/* Workout Split - Most Important! */}
+              {/* Workout Split */}
               {currentMatch.workout_split && (
-                <div className="px-3 py-1.5 backdrop-blur-md bg-gradient-to-r from-emerald-500/90 to-teal-500/90 rounded-full border-2 border-emerald-300/50 text-white text-sm font-black flex items-center gap-1.5 shadow-lg">
-                  <span>💪</span>
+                <div className="px-3 py-1.5 backdrop-blur-md bg-gradient-to-r from-emerald-500/90 to-teal-500/90 rounded-full border-2 border-emerald-300/50 text-white text-sm font-black shadow-lg">
                   <span>{currentMatch.workout_split}</span>
                 </div>
               )}
 
               {/* Weekly Frequency */}
               {currentMatch.weekly_frequency && (
-                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
-                  <span>📅</span>
+                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium">
                   <span>{currentMatch.weekly_frequency}x/week</span>
                 </div>
               )}
 
-              {/* Years Training */}
-              {currentMatch.years_training && (
-                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
-                  <span>🏋️</span>
-                  <span>{currentMatch.years_training}yr{currentMatch.years_training > 1 ? 's' : ''}</span>
-                </div>
-              )}
-
-              {/* Current Goal */}
-              {currentMatch.current_goal && (
-                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
-                  <span>
-                    {currentMatch.current_goal === 'bulk' && '💪'}
-                    {currentMatch.current_goal === 'cut' && '🔥'}
-                    {currentMatch.current_goal === 'maintain' && '⚖️'}
-                    {currentMatch.current_goal === 'strength' && '🏋️'}
-                    {currentMatch.current_goal === 'endurance' && '🏃'}
-                    {currentMatch.current_goal === 'beginner_gains' && '🌱'}
-                  </span>
-                  <span className="capitalize">{currentMatch.current_goal.replace('_', ' ')}</span>
+              {/* Fitness Level */}
+              {currentMatch.fitness_level && (
+                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium capitalize">
+                  <span>{currentMatch.fitness_level}</span>
                 </div>
               )}
 
               {/* Preferred Time */}
               {currentMatch.preferred_time && (
-                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
-                  <span>🕐</span>
-                  <span className="capitalize">{currentMatch.preferred_time.replace('_', ' ')}</span>
+                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium capitalize">
+                  <span>{currentMatch.preferred_time.replace('_', ' ')}</span>
                 </div>
               )}
-
-              {/* Workout Time (legacy) */}
-              {currentMatch.workout_time_preference && !currentMatch.preferred_time && (
-                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
-                  <span>🕐</span>
-                  <span className="capitalize">{currentMatch.workout_time_preference.replace('_', ' ')}</span>
-                </div>
-              )}
-
-              {/* Experience (legacy) */}
-              {currentMatch.workout_experience_months && !currentMatch.years_training && (
-                <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
-                  <span>📅</span>
-                  <span>{Math.floor(currentMatch.workout_experience_months / 12)}y {currentMatch.workout_experience_months % 12}m</span>
-                </div>
-              )}
-
-              {/* Fitness Level */}
-              <div className="px-3 py-1.5 backdrop-blur-md bg-white/15 rounded-full border border-white/30 text-white text-sm font-medium flex items-center gap-1.5">
-                <span>
-                  {currentMatch.fitness_level === 'beginner' && '🌱'}
-                  {currentMatch.fitness_level === 'intermediate' && '💪'}
-                  {currentMatch.fitness_level === 'advanced' && '🏆'}
-                </span>
-                <span className="capitalize">{currentMatch.fitness_level}</span>
-              </div>
             </div>
 
             {/* Bio */}
@@ -1077,8 +1032,8 @@ export default function DiscoverPageV2() {
               </p>
             )}
 
-            {/* Match Reasons */}
-            {currentMatch.matchReasons.length > 0 && (
+            {/* Match Reasons - HIDDEN for cleaner UI */}
+            {false && currentMatch.matchReasons.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {currentMatch.matchReasons.slice(0, 3).map((reason, idx) => (
                   <span
