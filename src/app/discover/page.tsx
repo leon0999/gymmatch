@@ -739,34 +739,11 @@ export default function DiscoverPageV2() {
           {/* Gradient Overlay for readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
 
-          {/* Top Info - Match Score */}
-          <div className="absolute top-6 right-6 z-10">
-            <div className={`px-4 py-2 rounded-full backdrop-blur-md bg-white/20 border-2 ${
-              currentMatch.matchScore >= 80 ? 'border-green-400' :
-              currentMatch.matchScore >= 60 ? 'border-blue-400' :
-              'border-yellow-400'
-            }`}>
-              <div className="text-white text-2xl font-bold">
-                {currentMatch.matchScore}%
-              </div>
-            </div>
-          </div>
-
           {/* Today's Workout Part - BIG BADGE */}
           {currentMatch.today_workout_part && (
             <div className="absolute top-6 left-6 z-10">
               <div className="px-5 py-3 rounded-full backdrop-blur-md bg-emerald-500/90 border-2 border-white/50 shadow-xl">
-                <div className="text-white font-bold text-lg capitalize flex items-center gap-2">
-                  <span className="text-2xl">
-                    {currentMatch.today_workout_part === 'chest' && '💪'}
-                    {currentMatch.today_workout_part === 'back' && '🦸'}
-                    {currentMatch.today_workout_part === 'legs' && '🦵'}
-                    {currentMatch.today_workout_part === 'shoulders' && '🤸'}
-                    {currentMatch.today_workout_part === 'arms' && '💪'}
-                    {currentMatch.today_workout_part === 'core' && '🧘'}
-                    {currentMatch.today_workout_part === 'cardio' && '🏃'}
-                    {currentMatch.today_workout_part === 'rest' && '😴'}
-                  </span>
+                <div className="text-white font-bold text-lg capitalize">
                   {currentMatch.today_workout_part}
                 </div>
               </div>
@@ -791,17 +768,6 @@ export default function DiscoverPageV2() {
 
                   const isSameFocus = todayFocus && todayFocus !== 'any' && currentMatch.today_workout_focus === todayFocus;
 
-                  const focusEmojis: Record<string, string> = {
-                    chest: '💪',
-                    back: '🔥',
-                    legs: '🦵',
-                    shoulders: '🏋️',
-                    arms: '💪',
-                    core: '⚡',
-                    cardio: '🏃',
-                    any: '✨',
-                  };
-
                   const focusLabels: Record<string, string> = {
                     chest: 'Chest',
                     back: 'Back',
@@ -823,13 +789,9 @@ export default function DiscoverPageV2() {
                           : 'bg-white/20 border-white/30 text-white'
                         }
                       `}>
-                        <span className="text-base">
-                          {focusEmojis[currentMatch.today_workout_focus] || '💪'}
-                        </span>
                         <span>
                           {focusLabels[currentMatch.today_workout_focus] || 'Today'}
                         </span>
-                        {isSameFocus && <span className="text-xs">✨</span>}
                       </div>
                     );
                   }
@@ -838,13 +800,9 @@ export default function DiscoverPageV2() {
               </div>
 
               <div className="flex items-center gap-3 text-white/90 text-sm">
-                <span className="flex items-center gap-1">
-                  📍 {currentMatch.location_name}
-                </span>
+                <span>{currentMatch.location}</span>
                 {currentMatch.distance && (
-                  <span className="flex items-center gap-1">
-                    🚶 {currentMatch.distance} miles
-                  </span>
+                  <span>• {currentMatch.distance} miles</span>
                 )}
               </div>
             </div>
