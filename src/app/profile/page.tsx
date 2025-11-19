@@ -30,7 +30,7 @@ export default function ProfilePage() {
     name: '',
     age: 0,
     bio: '',
-    location_name: '',
+    location: '',
     fitness_level: '' as 'beginner' | 'intermediate' | 'advanced',
     fitness_goals: [] as string[],
     workout_styles: [] as string[],
@@ -95,7 +95,7 @@ export default function ProfilePage() {
         name: data.name || '',
         age: data.age || 0,
         bio: data.bio || '',
-        location_name: data.location_name || '',
+        location: data.location || '',
         fitness_level: data.fitness_level || 'beginner',
         fitness_goals: data.fitness_goals || [],
         workout_styles: data.workout_styles || [],
@@ -224,7 +224,7 @@ export default function ProfilePage() {
           name: editForm.name.trim(),
           age: editForm.age,
           bio: editForm.bio.trim(),
-          location_name: editForm.location_name.trim(),
+          location: editForm.location.trim(),
           fitness_level: editForm.fitness_level,
           fitness_goals: editForm.fitness_goals,
           workout_styles: editForm.workout_styles,
@@ -267,7 +267,7 @@ export default function ProfilePage() {
         name: profile.name || '',
         age: profile.age || 0,
         bio: profile.bio || '',
-        location_name: profile.location_name || '',
+        location: profile.location || '',
         fitness_level: profile.fitness_level || 'beginner',
         fitness_goals: profile.fitness_goals || [],
         workout_styles: profile.workout_styles || [],
@@ -579,8 +579,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="text"
-                    value={editForm.location_name}
-                    onChange={(e) => setEditForm({ ...editForm, location_name: e.target.value })}
+                    value={editForm.location}
+                    onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                     placeholder="City, State"
                   />
