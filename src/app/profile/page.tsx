@@ -420,16 +420,6 @@ export default function ProfilePage() {
         {/* Instagram Style Header */}
         <div className="flex items-center justify-between mb-6 px-2">
           <h1 className="text-xl font-semibold text-gray-900">{profile.name}</h1>
-          <button
-            onClick={() => setIsEditing(true)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label="Settings"
-          >
-            <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </button>
         </div>
 
         {/* Instagram Profile Section */}
@@ -457,15 +447,15 @@ export default function ProfilePage() {
             <div className="flex-1 flex justify-around">
               <div className="text-center">
                 <div className="text-xl font-semibold text-gray-900">0</div>
-                <div className="text-sm text-gray-600">게시물</div>
+                <div className="text-sm text-gray-600">Posts</div>
               </div>
               <div className="text-center">
                 <div className="text-xl font-semibold text-gray-900">0</div>
-                <div className="text-sm text-gray-600">팔로워</div>
+                <div className="text-sm text-gray-600">Followers</div>
               </div>
               <div className="text-center">
                 <div className="text-xl font-semibold text-gray-900">0</div>
-                <div className="text-sm text-gray-600">팔로우</div>
+                <div className="text-sm text-gray-600">Following</div>
               </div>
             </div>
           </div>
@@ -477,7 +467,7 @@ export default function ProfilePage() {
               <p className="text-sm text-gray-900 mt-1">{profile.bio}</p>
             )}
             {profile.gym && (
-              <p className="text-sm text-gray-600 mt-1">📍 {profile.gym}</p>
+              <p className="text-sm text-gray-600 mt-1">{profile.gym}</p>
             )}
           </div>
 
@@ -488,7 +478,7 @@ export default function ProfilePage() {
                 onClick={() => setIsEditing(true)}
                 className="w-full px-4 py-2 bg-gray-100 text-gray-900 font-semibold rounded-lg hover:bg-gray-200 transition-colors text-sm"
               >
-                프로필 편집
+                Edit Profile
               </button>
             </div>
           )}
@@ -500,7 +490,7 @@ export default function ProfilePage() {
             <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               {/* Modal Header */}
               <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-                <h2 className="text-xl font-semibold text-gray-900">프로필 편집</h2>
+                <h2 className="text-xl font-semibold text-gray-900">Edit Profile</h2>
                 <button
                   onClick={handleCancelEdit}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -515,11 +505,11 @@ export default function ProfilePage() {
               {/* Photo Upload Section */}
               <div className="p-6 border-b border-gray-200">
                 <div className="text-center">
-                  <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 overflow-hidden">
-                    {profile.photo_url ? (
+                  <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 overflow-hidden border-4 border-gray-200">
+                    {editForm.photo_url ? (
                       <img
-                        src={profile.photo_url}
-                        alt={profile.name}
+                        src={editForm.photo_url}
+                        alt={editForm.name}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -589,7 +579,7 @@ export default function ProfilePage() {
                 {/* Gym */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Gym
+                    Your Gym
                   </label>
                   <input
                     type="text"
@@ -622,7 +612,7 @@ export default function ProfilePage() {
                   <select
                     value={editForm.fitness_level}
                     onChange={(e) => setEditForm({ ...editForm, fitness_level: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent capitalize"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 capitalize"
                   >
                     <option value="beginner">Beginner</option>
                     <option value="intermediate">Intermediate</option>
@@ -825,10 +815,10 @@ export default function ProfilePage() {
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { key: 'morning', label: '🌅 Morning (6-9am)' },
-                      { key: 'midday', label: '☀️ Midday (12-2pm)' },
-                      { key: 'evening', label: '🌆 Evening (5-8pm)' },
-                      { key: 'night', label: '🌙 Night (8-11pm)' },
+                      { key: 'morning', label: 'Morning (6-9am)' },
+                      { key: 'midday', label: 'Midday (12-2pm)' },
+                      { key: 'evening', label: 'Evening (5-8pm)' },
+                      { key: 'night', label: 'Night (8-11pm)' },
                     ].map((time) => (
                       <button
                         key={time.key}
