@@ -294,7 +294,7 @@ export default function FeedPage() {
               {/* Modal Header */}
               <div className="flex items-center justify-between p-6 border-b border-gray-200">
                 <h2 className="text-xl font-bold text-gray-900">
-                  사진 올릴 파트너 선택
+                  Select Partner to Post With
                 </h2>
                 <button
                   onClick={() => setShowApprovedMatchesModal(false)}
@@ -314,10 +314,10 @@ export default function FeedPage() {
                   <div className="text-center py-12 px-6">
                     <Camera className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                     <p className="text-gray-600 font-semibold mb-2">
-                      승인된 파트너가 없습니다
+                      No Approved Partners
                     </p>
                     <p className="text-gray-400 text-sm">
-                      채팅에서 Photo Session을 먼저 승인해주세요!
+                      Approve a Photo Session in chat first!
                     </p>
                   </div>
                 ) : (
@@ -346,7 +346,7 @@ export default function FeedPage() {
                           </p>
                           <p className="text-sm text-emerald-600 flex items-center gap-1">
                             <Camera className="w-4 h-4" />
-                            Photo Session 승인됨
+                            Photo Session Approved
                           </p>
                         </div>
                         <svg
