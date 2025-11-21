@@ -574,7 +574,7 @@ export default function DiscoverPageV2() {
         .eq('user_id', targetUserId)
         .eq('target_user_id', userId)
         .eq('action', 'like')
-        .single();
+        .maybeSingle();
 
       if (mutualLike) {
         // Create mutual match (ensure user1_id < user2_id)
