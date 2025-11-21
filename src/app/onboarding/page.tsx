@@ -662,28 +662,28 @@ export default function OnboardingPage() {
                         type="number"
                         value={formData.benchPress1RM || ''}
                         onChange={(e) => updateField('benchPress1RM', parseInt(e.target.value) || null)}
-                        placeholder="225"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 text-gray-900 placeholder:text-gray-600"
+                        placeholder=""
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 text-gray-900 placeholder:text-gray-400"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-600 mb-1 font-medium">🦵 Squat</label>
+                      <label className="block text-xs text-gray-600 mb-1 font-medium">Squat</label>
                       <input
                         type="number"
                         value={formData.squat1RM || ''}
                         onChange={(e) => updateField('squat1RM', parseInt(e.target.value) || null)}
-                        placeholder="315"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 text-gray-900 placeholder:text-gray-600"
+                        placeholder=""
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 text-gray-900 placeholder:text-gray-400"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-600 mb-1 font-medium">💀 Deadlift</label>
+                      <label className="block text-xs text-gray-600 mb-1 font-medium">Deadlift</label>
                       <input
                         type="number"
                         value={formData.deadlift1RM || ''}
                         onChange={(e) => updateField('deadlift1RM', parseInt(e.target.value) || null)}
-                        placeholder="405"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 text-gray-900 placeholder:text-gray-600"
+                        placeholder=""
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 text-gray-900 placeholder:text-gray-400"
                       />
                     </div>
                     <div>
@@ -692,13 +692,13 @@ export default function OnboardingPage() {
                         type="number"
                         value={formData.overheadPress1RM || ''}
                         onChange={(e) => updateField('overheadPress1RM', parseInt(e.target.value) || null)}
-                        placeholder="135"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 text-gray-900 placeholder:text-gray-600"
+                        placeholder=""
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 text-gray-900 placeholder:text-gray-400"
                       />
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    💡 Your PRs help us match you with partners at similar strength levels
+                    Your PRs help us match you with partners at similar strength levels
                   </p>
                 </div>
 
@@ -740,8 +740,8 @@ export default function OnboardingPage() {
                     type="number"
                     value={formData.yearsTraining || ''}
                     onChange={(e) => updateField('yearsTraining', parseInt(e.target.value) || null)}
-                    placeholder="e.g., 3"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-600"
+                    placeholder=""
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:border-transparent text-gray-900 placeholder:text-gray-400"
                   />
                 </div>
 
@@ -774,12 +774,12 @@ export default function OnboardingPage() {
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { key: 'early_morning', label: '🌅 Early (5-8am)' },
-                      { key: 'morning', label: '☀️ Morning (8-12pm)' },
-                      { key: 'afternoon', label: '🌤️ Afternoon (12-5pm)' },
-                      { key: 'evening', label: '🌆 Evening (5-8pm)' },
-                      { key: 'night', label: '🌙 Night (8-11pm)' },
-                      { key: 'flexible', label: '🔄 Flexible' },
+                      { key: 'early_morning', label: 'Early (5-8am)' },
+                      { key: 'morning', label: 'Morning (8-12pm)' },
+                      { key: 'afternoon', label: 'Afternoon (12-5pm)' },
+                      { key: 'evening', label: 'Evening (5-8pm)' },
+                      { key: 'night', label: 'Night (8-11pm)' },
+                      { key: 'flexible', label: 'Flexible' },
                     ].map((time) => (
                       <button
                         key={time.key}
@@ -799,14 +799,14 @@ export default function OnboardingPage() {
                 {/* 운동 경력 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    How long have you been working out?
+                    How long have you been working out? (months)
                   </label>
                   <input
                     type="number"
                     value={formData.workoutExperienceMonths || ''}
                     onChange={(e) => updateField('workoutExperienceMonths', parseInt(e.target.value) || null)}
-                    placeholder="e.g., 24 (months)"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 text-gray-900"
+                    placeholder=""
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 text-gray-900 placeholder:text-gray-400"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     This helps us match you with partners at similar levels

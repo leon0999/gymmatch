@@ -122,7 +122,6 @@ export default function DiscoverFilters({ filters, onFiltersChange }: DiscoverFi
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
-                      <span className="mr-2">{part.emoji}</span>
                       {part.label}
                     </button>
                   ))}

@@ -2,9 +2,10 @@
  * GymMatch - Supabase Client Configuration
  *
  * Centralized Supabase client for database operations, auth, and realtime subscriptions
+ * Uses @supabase/ssr for proper cookie-based session management in Next.js
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from './database.types';
 
 // ============================================================================
@@ -21,21 +22,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // ============================================================================
-// SUPABASE CLIENT
+// SUPABASE CLIENT (Cookie-based for SSR compatibility)
 // ============================================================================
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 10,
-    },
-  },
-});
+export const supabase = createBrowserClient<Database>(
+  supabaseUrl,
+  supabaseAnonKey
+);
 
 // ============================================================================
 // AUTH HELPERS

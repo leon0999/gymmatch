@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClientFromRequest } from '@/lib/supabase-server';
 
 /**
  * DELETE /api/posts/[postId]/comments/[commentId]
@@ -12,6 +12,9 @@ export async function DELETE(
 ) {
   try {
     const { commentId } = await params;
+
+    // Use Request-based client for Next.js 16 compatibility
+    const supabase = createServerClientFromRequest(request);
 
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
@@ -46,7 +49,8 @@ export async function DELETE(
       throw error;
     }
 
-    // Note: comments_count will be automatically decremented by trigger
+    // ✅ Database Trigger가 자동으로 comments_count 업데이트
+    console.log('✅ Comment deleted - trigger will update count automatically');
 
     return NextResponse.json({
       success: true,

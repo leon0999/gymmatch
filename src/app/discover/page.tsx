@@ -44,6 +44,7 @@ export default function DiscoverPageV2() {
   });
   const [showWorkoutPopup, setShowWorkoutPopup] = useState(false);
   const [todayFocus, setTodayFocus] = useState<string | null>(null);
+  const [passedUserIds, setPassedUserIds] = useState<Set<string>>(new Set());
 
   // Swipe animation values (must be at top level)
   const x = useMotionValue(0);
@@ -56,6 +57,17 @@ export default function DiscoverPageV2() {
 
   useEffect(() => {
     checkTodayWorkoutFocus();
+
+    // Load passed users from localStorage
+    const storedPassedUsers = localStorage.getItem('gymmatch_passed_users');
+    if (storedPassedUsers) {
+      try {
+        const passedArray = JSON.parse(storedPassedUsers) as string[];
+        setPassedUserIds(new Set(passedArray));
+      } catch (error) {
+        console.error('Failed to load passed users:', error);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -165,12 +177,12 @@ export default function DiscoverPageV2() {
         return;
       }
 
-      // Filter out already liked users
+      // Filter out already liked and passed users
       const unseenProfiles = (allProfiles || []).filter(
-        (p) => !likedUserIds.has(p.user_id)
+        (p) => !likedUserIds.has(p.user_id) && !passedUserIds.has(p.user_id)
       );
 
-      console.log('🔍 Unseen profiles (not liked yet):', unseenProfiles.length);
+      console.log('🔍 Unseen profiles (not liked or passed):', unseenProfiles.length);
 
       // Apply preference filters
       const filteredProfiles = unseenProfiles.filter((match) => {
@@ -524,7 +536,19 @@ export default function DiscoverPageV2() {
 
     console.log('❌ Passed:', match.name);
 
-    // Move to next (we don't record passes, just skip)
+    // Save to localStorage so they don't show up again
+    const newPassedUserIds = new Set(passedUserIds);
+    newPassedUserIds.add(match.user_id);
+    setPassedUserIds(newPassedUserIds);
+
+    // Persist to localStorage
+    try {
+      localStorage.setItem('gymmatch_passed_users', JSON.stringify(Array.from(newPassedUserIds)));
+    } catch (error) {
+      console.error('Failed to save passed users:', error);
+    }
+
+    // Move to next
     setCurrentIndex(currentIndex + 1);
   };
 
@@ -604,6 +628,28 @@ export default function DiscoverPageV2() {
   if (currentIndex >= matches.length) {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {/* Header with Filter and History */}
+        <div className="container mx-auto px-4 py-8 max-w-2xl">
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h1 className="text-2xl font-bold text-gray-900">Discover</h1>
+              <div className="flex items-center gap-3">
+                <DiscoverFilters filters={filters} onFiltersChange={(newFilters) => {
+                  setFilters(newFilters);
+                  setCurrentIndex(0);
+                }} />
+                <button
+                  onClick={() => router.push('/history')}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  aria-label="View History"
+                >
+                  <History className="w-6 h-6 text-gray-700" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center max-w-md">
             <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -664,9 +710,6 @@ export default function DiscoverPageV2() {
               >
                 <History className="w-6 h-6 text-gray-700" />
               </button>
-              <div className="text-sm font-medium text-gray-600">
-                {currentIndex + 1} of {matches.length}
-              </div>
             </div>
           </div>
           {/* Progress Bar */}
@@ -1085,15 +1128,6 @@ export default function DiscoverPageV2() {
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
             </svg>
           </button>
-        </div>
-
-        <div className="text-center mt-6 space-y-2">
-          <p className="text-sm font-medium text-gray-700">
-            ❤️ Like • ✕ Pass
-          </p>
-          <p className="text-xs text-gray-500">
-            Tap the buttons or swipe to choose
-          </p>
         </div>
       </div>
 

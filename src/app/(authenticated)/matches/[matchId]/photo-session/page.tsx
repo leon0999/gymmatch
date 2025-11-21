@@ -186,7 +186,6 @@ export default function PhotoSessionPage({ params }: { params: Promise<{ matchId
       const data = await res.json();
 
       if (data.success) {
-        alert('Photo uploaded successfully!');
         router.push('/feed');
       } else {
         alert('Failed to create post: ' + data.error);

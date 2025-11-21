@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerClientFromRequest } from '@/lib/supabase-server';
 
 /**
  * POST /api/posts/[postId]/like
@@ -13,35 +13,14 @@ export async function POST(
   try {
     const { postId } = await params;
 
-    // Get Authorization token
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized: Missing token' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-
-    // Create authenticated Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      }
-    );
+    // Use Request-based client for Next.js 16 compatibility
+    const supabase = createServerClientFromRequest(request);
 
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized: Invalid token' },
+        { success: false, error: 'Unauthorized' },
         { status: 401 }
       );
     }
@@ -55,10 +34,21 @@ export async function POST(
       .single();
 
     if (existing) {
-      return NextResponse.json(
-        { success: false, error: 'Already liked' },
-        { status: 400 }
-      );
+      console.log('ℹ️  User already liked this post, returning current state:', { postId, userId: user.id });
+
+      // Get current count and return success with current state
+      const { data: currentPost } = await supabase
+        .from('posts')
+        .select('likes_count')
+        .eq('id', postId)
+        .single();
+
+      return NextResponse.json({
+        success: true,
+        message: 'Already liked',
+        alreadyLiked: true,
+        likes_count: currentPost?.likes_count || 0,
+      });
     }
 
     // Add like
@@ -70,8 +60,8 @@ export async function POST(
       throw likeError;
     }
 
-    // Increment likes count
-    await supabase.rpc('increment_likes', { post_id: postId });
+    // ✅ Database Trigger가 자동으로 likes_count 업데이트
+    console.log('✅ Like added - trigger will update count automatically');
 
     // Get post owner to create notification
     const { data: post } = await supabase
@@ -117,35 +107,14 @@ export async function DELETE(
   try {
     const { postId } = await params;
 
-    // Get Authorization token
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized: Missing token' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-
-    // Create authenticated Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      }
-    );
+    // Use Request-based client for Next.js 16 compatibility
+    const supabase = createServerClientFromRequest(request);
 
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized: Invalid token' },
+        { success: false, error: 'Unauthorized' },
         { status: 401 }
       );
     }
@@ -161,7 +130,8 @@ export async function DELETE(
       throw error;
     }
 
-    // Note: likes_count will be automatically decremented by trigger
+    // ✅ Database Trigger가 자동으로 likes_count 업데이트
+    console.log('✅ Like removed - trigger will update count automatically');
 
     return NextResponse.json({
       success: true,

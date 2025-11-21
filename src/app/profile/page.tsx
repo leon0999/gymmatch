@@ -24,6 +24,9 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [postsCount, setPostsCount] = useState(0);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
   // Form state for editing
   const [editForm, setEditForm] = useState({
@@ -51,6 +54,36 @@ export default function ProfilePage() {
   useEffect(() => {
     loadProfile();
   }, []);
+
+  const loadStats = async (userId: string) => {
+    try {
+      // Get posts count
+      const { count: posts } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact', head: true })
+        .or(`user_id.eq.${userId},photographer_id.eq.${userId}`);
+
+      setPostsCount(posts || 0);
+
+      // Get followers count
+      const { count: followers } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', userId);
+
+      setFollowersCount(followers || 0);
+
+      // Get following count
+      const { count: following } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('follower_id', userId);
+
+      setFollowingCount(following || 0);
+    } catch (error) {
+      console.error('Failed to load stats:', error);
+    }
+  };
 
   const loadProfile = async () => {
     try {
@@ -89,6 +122,9 @@ export default function ProfilePage() {
 
       console.log('✅ Profile loaded:', data.name);
       setProfile(data);
+
+      // Load stats
+      await loadStats(user.id);
 
       // Initialize edit form with current profile data
       setEditForm({
@@ -251,7 +287,6 @@ export default function ProfilePage() {
       // Reload profile
       await loadProfile();
       setIsEditing(false);
-      alert('Profile updated successfully!');
     } catch (err: any) {
       console.error('Error saving profile:', err);
       alert('Something went wrong');
@@ -365,7 +400,6 @@ export default function ProfilePage() {
 
       // Reload profile
       await loadProfile();
-      alert('Photo uploaded successfully!');
     } catch (err) {
       console.error('Error uploading photo:', err);
       alert('Something went wrong');
@@ -446,15 +480,15 @@ export default function ProfilePage() {
             {/* Stats */}
             <div className="flex-1 flex justify-around">
               <div className="text-center">
-                <div className="text-xl font-semibold text-gray-900">0</div>
+                <div className="text-xl font-semibold text-gray-900">{postsCount}</div>
                 <div className="text-sm text-gray-600">Posts</div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-semibold text-gray-900">0</div>
+                <div className="text-xl font-semibold text-gray-900">{followersCount}</div>
                 <div className="text-sm text-gray-600">Followers</div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-semibold text-gray-900">0</div>
+                <div className="text-xl font-semibold text-gray-900">{followingCount}</div>
                 <div className="text-sm text-gray-600">Following</div>
               </div>
             </div>
@@ -842,27 +876,27 @@ export default function ProfilePage() {
                     <button
                       onClick={handleSaveProfile}
                       disabled={saving}
-                      className="flex-1 px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="flex-1 px-6 py-3 bg-emerald-500 text-white font-medium rounded-lg hover:bg-emerald-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                     >
                       {saving ? 'Saving...' : 'Save Changes'}
                     </button>
                     <button
                       onClick={handleCancelEdit}
                       disabled={saving}
-                      className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Cancel
                     </button>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="w-full px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700"
+                    className="w-full px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
                   >
                     Logout
                   </button>
                   <button
                     onClick={handleDeleteAccount}
-                    className="w-full px-6 py-3 border-2 border-red-600 text-red-600 font-semibold rounded-lg hover:bg-red-50"
+                    className="w-full px-6 py-3 border border-gray-300 text-gray-600 font-medium rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors"
                   >
                     Delete Account
                   </button>
@@ -878,19 +912,12 @@ export default function ProfilePage() {
           {/* Tabs */}
           <div className="flex border-b border-gray-200">
             <button className="flex-1 py-3 text-gray-900 border-b-2 border-gray-900">
-              <svg className="w-6 h-6 mx-auto" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M4 4h7V11H4zm0 9h7v7H4zm9-9h7V11h-7zm0 9h7v7h-7z" />
-              </svg>
-            </button>
-            <button className="flex-1 py-3 text-gray-400">
-              <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-              </svg>
-            </button>
-            <button className="flex-1 py-3 text-gray-400">
-              <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+              <div className="flex items-center justify-center gap-2">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M4 4h7V11H4zm0 9h7v7H4zm9-9h7V11h-7zm0 9h7v7h-7z" />
+                </svg>
+                <span className="text-sm font-medium">Posts</span>
+              </div>
             </button>
           </div>
 

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Post } from '@/lib/types';
 import { Heart, MessageCircle, MoreVertical } from 'lucide-react';
 import CommentSection from './CommentSection';
+import UserProfileModal from './UserProfileModal';
 import { supabase } from '@/lib/supabase';
 
 interface PostCardProps {
@@ -15,12 +16,14 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post, onLikeChange, onCommentChange, onDelete }: PostCardProps) {
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(post.isLikedByCurrentUser || false);
   const [likesCount, setLikesCount] = useState(post.likes_count);
   const [commentsCount, setCommentsCount] = useState(post.comments_count);
   const [showComments, setShowComments] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const handleLike = async () => {
     if (loading) return;
@@ -36,28 +39,33 @@ export default function PostCard({ post, onLikeChange, onCommentChange, onDelete
     try {
       setLoading(true);
 
-      // Get session token
+      // Get session token for Authorization header
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        alert('Session expired. Please log in again.');
-        setLiked(!newLiked);
-        setLikesCount(newLiked ? optimisticCount - 1 : optimisticCount + 1);
-        onLikeChange?.(post.id, !newLiked, newLiked ? optimisticCount - 1 : optimisticCount + 1);
-        return;
+      const headers: HeadersInit = {};
+
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
       }
 
       const res = await fetch(`/api/posts/${post.id}/like`, {
         method: newLiked ? 'POST' : 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+        headers,
+        credentials: 'same-origin', // Include cookies as fallback
       });
+
+      const data = await res.json();
 
       if (!res.ok) {
         // Revert on error
         setLiked(!newLiked);
         setLikesCount(newLiked ? optimisticCount - 1 : optimisticCount + 1);
         onLikeChange?.(post.id, !newLiked, newLiked ? optimisticCount - 1 : optimisticCount + 1);
+      } else if (data.alreadyLiked) {
+        // Server says already liked, sync with server state
+        console.log('ℹ️  Syncing like state with server:', data.likes_count);
+        setLiked(true);
+        setLikesCount(data.likes_count);
+        onLikeChange?.(post.id, true, data.likes_count);
       }
     } catch (error) {
       console.error('Failed to like post:', error);
@@ -74,8 +82,18 @@ export default function PostCard({ post, onLikeChange, onCommentChange, onDelete
     if (!confirm('Are you sure you want to delete this post?')) return;
 
     try {
+      // Get session token for Authorization header
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch(`/api/posts/${post.id}`, {
         method: 'DELETE',
+        headers,
+        credentials: 'same-origin', // Include cookies as fallback
       });
 
       if (res.ok) {
@@ -101,6 +119,11 @@ export default function PostCard({ post, onLikeChange, onCommentChange, onDelete
     onCommentChange?.(post.id, newCount);
   };
 
+  const handleUserClick = (userId: string) => {
+    setSelectedUserId(userId);
+    setShowProfileModal(true);
+  };
+
   return (
     <div className="bg-white border-b border-gray-200">
       {/* Header */}
@@ -122,10 +145,20 @@ export default function PostCard({ post, onLikeChange, onCommentChange, onDelete
             </div>
           )}
           <div>
-            <p className="font-semibold text-sm text-gray-900">
-              {post.photographer?.name}
+            <p className="text-sm text-gray-900">
+              <button
+                onClick={() => handleUserClick(post.photographer_id)}
+                className="font-semibold hover:underline"
+              >
+                {post.photographer?.name}
+              </button>
               <span className="font-normal text-gray-700"> photographed </span>
-              {post.user?.name}
+              <button
+                onClick={() => handleUserClick(post.user_id)}
+                className="font-semibold hover:underline"
+              >
+                {post.user?.name}
+              </button>
             </p>
             {post.workout_type && (
               <p className="text-xs text-gray-700 capitalize">{post.workout_type}</p>
@@ -180,42 +213,44 @@ export default function PostCard({ post, onLikeChange, onCommentChange, onDelete
 
       {/* Actions */}
       <div className="px-4 py-3">
-        <div className="flex items-center space-x-4 mb-2">
+        <div className="flex items-center space-x-6 mb-3">
+          {/* Like Button with Count */}
           <button
             onClick={handleLike}
             disabled={loading}
-            className="p-1 hover:opacity-70 transition-opacity disabled:opacity-50"
+            className="flex items-center gap-2 hover:opacity-70 transition-opacity disabled:opacity-50"
           >
             <Heart
               className={`w-7 h-7 ${
                 liked ? 'fill-red-500 text-red-500' : 'text-gray-900'
               }`}
             />
+            <span className="text-base font-semibold text-gray-900">
+              {likesCount}
+            </span>
           </button>
+
+          {/* Comment Button with Count */}
           <button
             onClick={() => setShowComments(!showComments)}
-            className="p-1 hover:opacity-70 transition-opacity"
+            className="flex items-center gap-2 hover:opacity-70 transition-opacity"
           >
-            <MessageCircle className="w-7 h-7" />
+            <MessageCircle className="w-7 h-7 text-gray-900" />
+            <span className="text-base font-semibold text-gray-900">
+              {commentsCount}
+            </span>
           </button>
         </div>
-
-        {/* Likes Count */}
-        {likesCount > 0 && (
-          <p className="font-semibold text-sm mb-2">
-            {likesCount} {likesCount === 1 ? 'like' : 'likes'}
-          </p>
-        )}
 
         {/* Caption & Workout Info */}
         <div className="mb-2">
           {/* Username + Caption */}
-          <p className="text-sm">
-            <span className="font-semibold mr-1">{post.photographer?.name}</span>
+          <p className="text-sm text-gray-900">
+            <span className="font-semibold text-gray-900 mr-1">{post.photographer?.name}</span>
             {post.caption ? (
               <span className="text-gray-900">{post.caption}</span>
             ) : (
-              <span className="text-gray-400 italic">No caption</span>
+              <span className="text-gray-500 italic">No caption</span>
             )}
           </p>
 
@@ -236,18 +271,8 @@ export default function PostCard({ post, onLikeChange, onCommentChange, onDelete
           )}
         </div>
 
-        {/* Comments Toggle */}
-        {commentsCount > 0 && (
-          <button
-            onClick={() => setShowComments(!showComments)}
-            className="text-sm text-gray-500 hover:text-gray-700 mb-2"
-          >
-            View all {commentsCount} {commentsCount === 1 ? 'comment' : 'comments'}
-          </button>
-        )}
-
         {/* Timestamp */}
-        <p className="text-xs text-gray-400 uppercase">
+        <p className="text-xs text-gray-600 uppercase">
           {new Date(post.created_at).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
@@ -261,6 +286,15 @@ export default function PostCard({ post, onLikeChange, onCommentChange, onDelete
           postId={post.id}
           onCommentAdded={handleCommentAdded}
           onCommentDeleted={handleCommentDeleted}
+        />
+      )}
+
+      {/* User Profile Modal */}
+      {selectedUserId && (
+        <UserProfileModal
+          userId={selectedUserId}
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
         />
       )}
     </div>

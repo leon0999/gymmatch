@@ -484,12 +484,12 @@ export default function ChatPage() {
                 <button
                   onClick={togglePhotoSessionApproval}
                   disabled={isTogglingApproval}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                  className={`px-4 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all duration-200 ${
                     bothApproved
                       ? 'bg-green-100 text-green-700 hover:bg-green-200'
                       : myApproval
                       ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md hover:shadow-lg hover:scale-105'
                   } ${isTogglingApproval ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {bothApproved ? (

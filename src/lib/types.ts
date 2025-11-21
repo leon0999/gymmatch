@@ -337,6 +337,9 @@ export interface Post {
 
   created_at: string;
 
+  // Client-side computed fields
+  isLikedByCurrentUser?: boolean;  // 현재 사용자가 좋아요 눌렀는지 여부
+
   // Relations (joined data)
   user?: {
     name: string;

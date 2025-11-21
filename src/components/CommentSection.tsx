@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { PostComment } from '@/lib/types';
 import { Trash2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface CommentSectionProps {
   postId: string;
@@ -24,7 +25,9 @@ export default function CommentSection({ postId, onCommentAdded, onCommentDelete
   const loadComments = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/posts/${postId}/comments?limit=50`);
+      const res = await fetch(`/api/posts/${postId}/comments?limit=50`, {
+        credentials: 'same-origin', // Include cookies
+      });
       const data = await res.json();
 
       if (data.success) {
@@ -43,9 +46,21 @@ export default function CommentSection({ postId, onCommentAdded, onCommentDelete
 
     try {
       setPosting(true);
+
+      // Get session token for Authorization header
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch(`/api/posts/${postId}/comments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'same-origin', // Include cookies as fallback
         body: JSON.stringify({ comment: newComment.trim() }),
       });
 
@@ -70,8 +85,18 @@ export default function CommentSection({ postId, onCommentAdded, onCommentDelete
     if (!confirm('Delete this comment?')) return;
 
     try {
+      // Get session token for Authorization header
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch(`/api/posts/${postId}/comments/${commentId}`, {
         method: 'DELETE',
+        headers,
+        credentials: 'same-origin', // Include cookies as fallback
       });
 
       if (res.ok) {
@@ -113,11 +138,11 @@ export default function CommentSection({ postId, onCommentAdded, onCommentDelete
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm">
-                  <span className="font-semibold mr-2">{comment.user?.name}</span>
-                  {comment.comment}
+                <p className="text-sm text-gray-900">
+                  <span className="font-semibold text-gray-900 mr-2">{comment.user?.name}</span>
+                  <span className="text-gray-900">{comment.comment}</span>
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-gray-600 mt-1">
                   {new Date(comment.created_at).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
@@ -142,7 +167,7 @@ export default function CommentSection({ postId, onCommentAdded, onCommentDelete
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Add a comment..."
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900 placeholder:text-gray-500"
           disabled={posting}
         />
         <button

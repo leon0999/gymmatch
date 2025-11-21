@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClient, createServerClientFromRequest } from '@/lib/supabase-server';
 
 /**
  * GET /api/posts/[postId]/comments
@@ -16,6 +16,8 @@ export async function GET(
     const page = parseInt(searchParams.get('page') || '0');
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = page * limit;
+
+    const supabase = await createServerClient();
 
     const { data: comments, error, count } = await supabase
       .from('post_comments')
@@ -61,6 +63,19 @@ export async function POST(
 ) {
   try {
     const { postId } = await params;
+
+    // Debug: 쿠키 확인
+    const allCookies = request.cookies.getAll();
+    console.log('🍪 POST Request - Total cookies:', allCookies.length);
+    console.log('🍪 Cookie names:', allCookies.map(c => c.name).join(', '));
+    const supabaseCookies = allCookies.filter(c => c.name.startsWith('sb-'));
+    console.log('🔑 Supabase cookies:', supabaseCookies.length);
+    if (supabaseCookies.length > 0) {
+      supabaseCookies.forEach(cookie => {
+        console.log(`   ${cookie.name}: ${cookie.value?.substring(0, 50)}...`);
+      });
+    }
+
     const { comment } = await request.json();
 
     if (!comment || !comment.trim()) {
@@ -70,9 +85,16 @@ export async function POST(
       );
     }
 
+    // Use Request-based client for Next.js 16 compatibility
+    const supabase = createServerClientFromRequest(request);
+
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    console.log('👤 POST Comment - User:', user?.id, 'Error:', authError?.message);
+
     if (!user) {
+      console.log('❌ No user found - returning 401');
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -97,8 +119,8 @@ export async function POST(
       throw commentError;
     }
 
-    // Increment comments count
-    await supabase.rpc('increment_comments', { post_id: postId });
+    // ✅ Database Trigger가 자동으로 comments_count 업데이트
+    console.log('✅ Comment added - trigger will update count automatically');
 
     // Get post owner to create notification
     const { data: post } = await supabase

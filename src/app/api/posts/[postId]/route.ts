@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClientFromRequest } from '@/lib/supabase-server';
 
 /**
  * GET /api/posts/[postId]
@@ -12,6 +12,9 @@ export async function GET(
 ) {
   try {
     const { postId } = await params;
+
+    // Use Request-based client for Next.js 16 compatibility
+    const supabase = createServerClientFromRequest(request);
 
     const { data: post, error } = await supabase
       .from('posts')
@@ -61,6 +64,9 @@ export async function DELETE(
   try {
     const { postId } = await params;
 
+    // Use Request-based client for Next.js 16 compatibility
+    const supabase = createServerClientFromRequest(request);
+
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -70,16 +76,16 @@ export async function DELETE(
       );
     }
 
-    // Check if user owns this post
+    // Check if user is the photographer (uploader) of this post
     const { data: post } = await supabase
       .from('posts')
-      .select('user_id')
+      .select('photographer_id')
       .eq('id', postId)
       .single();
 
-    if (!post || post.user_id !== user.id) {
+    if (!post || post.photographer_id !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'Forbidden' },
+        { success: false, error: 'Only the photographer can delete this post' },
         { status: 403 }
       );
     }
