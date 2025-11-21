@@ -9,10 +9,26 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import type { Database } from '@/lib/database.types';
 
-type Profile = Database['public']['Tables']['profiles']['Row'];
-type Message = Database['public']['Tables']['messages']['Row'];
+// Chat-specific types
+type Profile = {
+  user_id: string;
+  name: string;
+  age: number;
+  gender: string;
+  location_name: string;
+  photo_url?: string;
+  created_at: string;
+};
+
+type Message = {
+  id: string;
+  match_id: string;
+  sender_id: string;
+  message: string;
+  read_at: string | null;
+  created_at: string;
+};
 
 interface MessageWithSender extends Message {
   sender_name?: string;
