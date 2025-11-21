@@ -149,15 +149,15 @@ export default function DiscoverPageV2() {
       console.log('✅ Profile loaded:', profile.name);
       setCurrentUser(profile);
 
-      // Get users already liked or passed
+      // Get users already liked or passed (using swipes table)
       console.log('💚 Fetching liked users...');
       const { data: likedUsers } = await supabase
-        .from('likes')
-        .select('to_user_id')
-        .eq('from_user_id', user.id);
+        .from('swipes')
+        .select('swiped_id')
+        .eq('swiper_id', user.id);
 
       const likedUserIds = new Set(
-        (likedUsers || []).map((s) => s.to_user_id)
+        (likedUsers || []).map((s) => s.swiped_id)
       );
       console.log('✅ Liked users:', likedUserIds.size);
 
@@ -507,10 +507,11 @@ export default function DiscoverPageV2() {
     const match = matches[currentIndex];
 
     try {
-      // Record like in database
-      const { error } = await supabase.from('likes').insert({
-        from_user_id: currentUser.user_id,
-        to_user_id: match.user_id,
+      // Record like in database (using swipes table)
+      const { error } = await supabase.from('swipes').insert({
+        swiper_id: currentUser.user_id,
+        swiped_id: match.user_id,
+        liked: true,
       });
 
       if (error) {
@@ -566,12 +567,13 @@ export default function DiscoverPageV2() {
 
   const checkMutualMatch = async (userId: string, targetUserId: string) => {
     try {
-      // Check if target user also liked current user
+      // Check if target user also liked current user (using swipes table)
       const { data: mutualLike } = await supabase
-        .from('likes')
+        .from('swipes')
         .select('*')
-        .eq('from_user_id', targetUserId)
-        .eq('to_user_id', userId)
+        .eq('swiper_id', targetUserId)
+        .eq('swiped_id', userId)
+        .eq('liked', true)
         .single();
 
       if (mutualLike) {
