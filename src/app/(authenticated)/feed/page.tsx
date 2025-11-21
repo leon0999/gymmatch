@@ -8,6 +8,9 @@ import { Post } from '@/lib/types';
 import PostCard from '@/components/PostCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { supabase } from '@/lib/supabase';
+import type { Database } from '@/lib/database.types';
+
+type Match = Database['public']['Tables']['matches']['Row'];
 
 interface ApprovedMatch {
   matchId: string;
@@ -119,7 +122,7 @@ export default function FeedPage() {
       // Get partner profiles
       const approvedMatchesList: ApprovedMatch[] = [];
 
-      for (const match of matchesData) {
+      for (const match of (matchesData as Match[])) {
         const partnerId = match.user1_id === user.id ? match.user2_id : match.user1_id;
 
         // Get partner profile
@@ -133,8 +136,8 @@ export default function FeedPage() {
           approvedMatchesList.push({
             matchId: match.id,
             partnerId,
-            partnerName: profile.name,
-            partnerPhotoUrl: profile.photo_url,
+            partnerName: (profile as any).name,
+            partnerPhotoUrl: (profile as any).photo_url,
           });
         }
       }
