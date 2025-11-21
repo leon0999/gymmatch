@@ -50,9 +50,9 @@ export type Database = {
       swipes: {
         Row: {
           id: string;
-          swiper_id: string;
-          swiped_id: string;
-          liked: boolean;
+          user_id: string;
+          target_user_id: string;
+          action: string;
           created_at: string;
         };
       };

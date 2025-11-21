@@ -75,8 +75,8 @@ export default function HistoryPage() {
       const { data: receivedData } = await supabase
         .from('swipes')
         .select('*')
-        .eq('swiped_id', user.id)
-        .eq('liked', true)
+        .eq('target_user_id', user.id)
+        .eq('action', 'like')
         .order('created_at', { ascending: false });
 
       if (receivedData) {
@@ -85,7 +85,7 @@ export default function HistoryPage() {
             const { data: senderProfile } = await supabase
               .from('profiles')
               .select('*')
-              .eq('user_id', like.swiper_id)
+              .eq('user_id', like.user_id)
               .single();
 
             return {
@@ -101,8 +101,8 @@ export default function HistoryPage() {
       const { data: sentData } = await supabase
         .from('swipes')
         .select('*')
-        .eq('swiper_id', user.id)
-        .eq('liked', true)
+        .eq('user_id', user.id)
+        .eq('action', 'like')
         .order('created_at', { ascending: false });
 
       if (sentData) {
@@ -111,7 +111,7 @@ export default function HistoryPage() {
             const { data: targetProfile } = await supabase
               .from('profiles')
               .select('*')
-              .eq('user_id', like.swiped_id)
+              .eq('user_id', like.target_user_id)
               .single();
 
             return {

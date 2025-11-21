@@ -153,11 +153,11 @@ export default function DiscoverPageV2() {
       console.log('💚 Fetching liked users...');
       const { data: likedUsers } = await supabase
         .from('swipes')
-        .select('swiped_id')
-        .eq('swiper_id', user.id);
+        .select('target_user_id')
+        .eq('user_id', user.id);
 
       const likedUserIds = new Set(
-        (likedUsers || []).map((s) => s.swiped_id)
+        (likedUsers || []).map((s) => s.target_user_id)
       );
       console.log('✅ Liked users:', likedUserIds.size);
 
@@ -509,9 +509,9 @@ export default function DiscoverPageV2() {
     try {
       // Record like in database (using swipes table)
       const { error } = await supabase.from('swipes').insert({
-        swiper_id: currentUser.user_id,
-        swiped_id: match.user_id,
-        liked: true,
+        user_id: currentUser.user_id,
+        target_user_id: match.user_id,
+        action: 'like',
       });
 
       if (error) {
@@ -571,9 +571,9 @@ export default function DiscoverPageV2() {
       const { data: mutualLike } = await supabase
         .from('swipes')
         .select('*')
-        .eq('swiper_id', targetUserId)
-        .eq('swiped_id', userId)
-        .eq('liked', true)
+        .eq('user_id', targetUserId)
+        .eq('target_user_id', userId)
+        .eq('action', 'like')
         .single();
 
       if (mutualLike) {
