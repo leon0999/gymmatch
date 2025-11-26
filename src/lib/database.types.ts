@@ -58,6 +58,22 @@ export type Database = {
           created_at: string;
         };
       };
+      bug_reports: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          description: string;
+          page_url: string;
+          screenshot_url: string | null;
+          browser_info: Record<string, any> | null;
+          user_agent: string | null;
+          status: string;
+          priority: string;
+          created_at: string;
+          updated_at: string | null;
+          resolved_at: string | null;
+        };
+      };
     };
   };
 };
