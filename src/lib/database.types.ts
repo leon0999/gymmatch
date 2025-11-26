@@ -24,6 +24,8 @@ export type Database = {
           created_at: string;
           updated_at: string | null;
           last_active: string | null;
+          today_workout_focus: string | null;
+          workout_focus_updated_at: string | null;
         };
       };
       matches: {
