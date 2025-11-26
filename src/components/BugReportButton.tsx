@@ -80,11 +80,15 @@ export default function BugReportButton() {
             upsert: false,
           });
 
-        if (!uploadError && uploadData) {
+        if (uploadError) {
+          console.error('Screenshot upload failed:', uploadError);
+          // Continue without screenshot - don't block bug report
+        } else if (uploadData) {
           const { data: { publicUrl } } = supabase.storage
             .from('bug-reports')
             .getPublicUrl(uploadData.path);
           screenshotUrl = publicUrl;
+          console.log('Screenshot uploaded:', publicUrl);
         }
       }
 
