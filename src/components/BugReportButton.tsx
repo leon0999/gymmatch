@@ -29,9 +29,13 @@ export default function BugReportButton() {
           const color = style.color || '';
           const bgColor = style.backgroundColor || '';
 
-          // Skip if using oklab, oklch, or other modern color functions
-          if (color.includes('oklab') || color.includes('oklch') ||
-              bgColor.includes('oklab') || bgColor.includes('oklch')) {
+          // Skip if using modern color functions (lab, lch, oklab, oklch)
+          const unsupportedColorFunctions = ['lab(', 'lch(', 'oklab(', 'oklch('];
+          const hasUnsupportedColor = unsupportedColorFunctions.some(fn =>
+            color.includes(fn) || bgColor.includes(fn)
+          );
+
+          if (hasUnsupportedColor) {
             return true;
           }
           return false;
