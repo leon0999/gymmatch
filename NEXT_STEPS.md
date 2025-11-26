@@ -1,349 +1,142 @@
-# GymMatch - Next Steps After Matching
+# ✅ Next Steps: Apply Workout Focus Migration
 
-## ✅ 현재 완료된 기능
-1. 회원가입 (실제 이메일/비밀번호)
-2. 로그인
-3. 프로필 생성 (5단계 온보딩)
-4. Discover 페이지 (스와이프 매칭)
-5. 상호 매칭 감지 (It's a match! 알림)
+## 🎯 What You Need to Do Now
+
+The migration files are ready! Now you just need to apply them to your Supabase database.
 
 ---
 
-## 🎯 Phase 1: 매칭 후 핵심 기능 (우선순위 높음)
+## 📋 Step-by-Step Instructions
 
-### 1.1. Matches 페이지 (`/matches`)
-**목적**: 매칭된 사람들 리스트 보기
+### Step 1: Open Supabase Dashboard (1 minute)
 
-**UI 구성**:
-```
-┌─────────────────────────────────────┐
-│  Matches (5)                    🏠  │
-├─────────────────────────────────────┤
-│  ┌───────────────────────────────┐  │
-│  │ 👤 Alex, 20                   │  │
-│  │ nyc • 1 mile away             │  │
-│  │ 💬 Start chatting!       [→]  │  │
-│  └───────────────────────────────┘  │
-│                                     │
-│  ┌───────────────────────────────┐  │
-│  │ 👤 Sarah, 25                  │  │
-│  │ brooklyn • 3 miles away       │  │
-│  │ 💬 Hey! When do you...   [→]  │  │
-│  └───────────────────────────────┘  │
-└─────────────────────────────────────┘
-```
+1. Go to: **https://supabase.com/dashboard**
+2. Login with your account
+3. Select your **GymMatch** project
+4. Click **"SQL Editor"** in the left sidebar
+5. Click **"New Query"** button
 
-**기능**:
-- 매칭된 사람들 리스트
-- 최근 메시지 미리보기
-- 클릭 시 채팅 페이지로 이동
-- 빈 상태: "No matches yet. Keep swiping!"
+### Step 2: Copy the SQL Script (30 seconds)
 
-**데이터베이스 쿼리**:
+**Option A - From This Repository:**
+1. Open: `/Users/user/Desktop/gymmatch/migrations/001_add_workout_focus_columns.sql`
+2. Copy lines **13 to 44** (everything between `BEGIN;` and `COMMIT;`)
+
+**Option B - From GitHub:**
+1. Go to: https://github.com/leon0999/gymmatch/blob/main/migrations/001_add_workout_focus_columns.sql
+2. Copy the SQL code
+
+### Step 3: Run the Migration (30 seconds)
+
+1. **Paste** the SQL into Supabase SQL Editor
+2. Click **"Run"** (or press `Cmd+Enter` / `Ctrl+Enter`)
+3. Wait for success message: ✅ "Success. No rows returned"
+
+### Step 4: Verify Success (30 seconds)
+
+Run this verification query in the same SQL Editor:
+
 ```sql
 SELECT
-  m.*,
-  p1.name, p1.age, p1.location_name, p1.photos,
-  (SELECT message FROM messages
-   WHERE match_id = m.id
-   ORDER BY created_at DESC LIMIT 1) as last_message
-FROM matches m
-JOIN profiles p1 ON (p1.user_id = m.user2_id)
-WHERE m.user1_id = {current_user_id}
-  OR m.user2_id = {current_user_id}
-ORDER BY m.matched_at DESC
+  column_name,
+  data_type,
+  is_nullable
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name = 'profiles'
+  AND column_name IN ('today_workout_focus', 'workout_focus_updated_at');
 ```
+
+**Expected Result:**
+```
+column_name              | data_type                   | is_nullable
+-------------------------+-----------------------------+------------
+today_workout_focus      | text                        | YES
+workout_focus_updated_at | timestamp with time zone    | YES
+```
+
+✅ If you see **2 rows**, migration is successful!
+
+### Step 5: Test the Application (2 minutes)
+
+1. **Restart your dev server:**
+   ```bash
+   # Stop: Ctrl+C
+   # Start:
+   npm run dev
+   ```
+
+2. **Open discover page:**
+   ```
+   http://localhost:3000/discover
+   ```
+
+3. **You should see:**
+   - ✅ "What's your focus today?" popup appears
+   - ✅ 8 workout options displayed (Chest, Back, Legs, etc.)
+
+4. **Select a focus:**
+   - Click any option (e.g., "Chest")
+   - ✅ Popup should close automatically
+   - ✅ Matches should load
+
+5. **Refresh page:**
+   - ✅ Popup should NOT appear again (already set today)
+
+6. **Check browser console (F12):**
+   - ✅ No errors related to database columns
 
 ---
 
-### 1.2. Chat 페이지 (`/chat/[matchId]`)
-**목적**: 1:1 실시간 채팅
+## 🎉 Success Criteria
 
-**UI 구성**:
-```
-┌─────────────────────────────────────┐
-│  ← Alex, 20                     ⋮  │
-├─────────────────────────────────────┤
-│                                     │
-│  👤 Alex: Hey! Want to hit the     │
-│           gym tomorrow?             │
-│           10:30 AM                  │
-│                                     │
-│                      Sure! What    👤│
-│                      time works?    │
-│                      10:32 AM       │
-│                                     │
-│  👤 Alex: How about 6pm?           │
-│           10:33 AM                  │
-│                                     │
-├─────────────────────────────────────┤
-│  Type a message...          [Send]  │
-└─────────────────────────────────────┘
-```
+You'll know it worked when:
 
-**기능**:
-- 실시간 메시지 전송/수신 (Supabase Realtime)
-- 메시지 타임스탬프
-- 읽음 표시 (선택사항)
-- 사진 전송 (Phase 2)
-- Workout 약속 제안 (Phase 2)
-
-**데이터베이스 스키마** (messages 테이블):
-```sql
-CREATE TABLE messages (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  match_id UUID NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
-  sender_id UUID NOT NULL REFERENCES profiles(user_id) ON DELETE CASCADE,
-  message TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  read_at TIMESTAMPTZ,
-
-  INDEX idx_match_messages (match_id, created_at)
-);
-
--- RLS 정책
-CREATE POLICY "Users can read messages in their matches"
-ON messages FOR SELECT
-USING (
-  match_id IN (
-    SELECT id FROM matches
-    WHERE user1_id = auth.uid() OR user2_id = auth.uid()
-  )
-);
-
-CREATE POLICY "Users can send messages in their matches"
-ON messages FOR INSERT
-WITH CHECK (
-  sender_id = auth.uid() AND
-  match_id IN (
-    SELECT id FROM matches
-    WHERE user1_id = auth.uid() OR user2_id = auth.uid()
-  )
-);
-```
+- ✅ SQL migration executed without errors
+- ✅ Verification query returns 2 columns
+- ✅ Popup appears on `/discover` page
+- ✅ Can select and save workout focus
+- ✅ Popup doesn't appear again after selecting
+- ✅ No console errors
 
 ---
 
-### 1.3. 매칭 성공 모달 개선
-**현재**: `alert()` 사용
-**개선**: 풀스크린 모달 + 애니메이션
+## ⏱️ Time Estimate
 
-**UI 구성**:
-```
-┌─────────────────────────────────────┐
-│                                     │
-│         ✨ It's a Match! ✨         │
-│                                     │
-│    ┌──────┐        ┌──────┐        │
-│    │ You  │   ❤️   │ Alex │        │
-│    └──────┘        └──────┘        │
-│                                     │
-│    You and Alex both liked          │
-│    each other!                      │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │   💬 Send a Message         │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │   Keep Swiping              │   │
-│  └─────────────────────────────┘   │
-│                                     │
-└─────────────────────────────────────┘
-```
+- **Step 1** (Open Supabase): 1 minute
+- **Step 2** (Copy SQL): 30 seconds
+- **Step 3** (Run migration): 30 seconds
+- **Step 4** (Verify): 30 seconds
+- **Step 5** (Test app): 2 minutes
 
-**기능**:
-- Framer Motion 애니메이션
-- "Send a Message" → 채팅 페이지로 이동
-- "Keep Swiping" → 다음 프로필
+**Total: 5 minutes** ⚡
 
 ---
 
-## 🎨 Phase 2: UX 개선 (우선순위 중간)
+## ✅ Checklist
 
-### 2.1. 온보딩 UX 개선
-**현재 문제**:
-- Step 1에 이메일/비밀번호 + 기본정보 모두 있음
-- 너무 많은 정보 요구
+Use this to track your progress:
 
-**개선안**:
-```
-Step 0: 계정 생성 (이메일/비밀번호만)
-  ↓
-Step 1: 기본 정보 (이름, 나이, 성별, 위치)
-  ↓
-Step 2: 피트니스 프로필
-  ↓
-Step 3: 스케줄
-  ↓
-Step 4: 바이오
-  ↓
-Step 5: 선호도
-```
+- [ ] Opened Supabase Dashboard
+- [ ] Navigated to SQL Editor
+- [ ] Copied migration SQL script
+- [ ] Ran migration in Supabase
+- [ ] Ran verification query
+- [ ] Saw 2 rows returned (columns exist)
+- [ ] Restarted dev server
+- [ ] Opened http://localhost:3000/discover
+- [ ] Saw "What's your focus today?" popup
+- [ ] Selected a workout focus
+- [ ] Popup closed automatically
+- [ ] Matches loaded successfully
+- [ ] Refreshed page (popup didn't appear again)
+- [ ] Checked browser console (no errors)
 
-**Step 0 디자인**:
-```
-┌─────────────────────────────────────┐
-│                                     │
-│         Welcome to GymMatch! 👋     │
-│                                     │
-│    Find your perfect gym partner    │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ Email Address               │   │
-│  │ your@email.com              │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ Password (min 6 chars)      │   │
-│  │ ••••••••                    │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │   Continue →                │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  Already have an account? Log In    │
-│                                     │
-└─────────────────────────────────────┘
-```
-
-### 2.2. 로그인 페이지 개선
-**추가 기능**:
-- "Remember me" 체크박스
-- "Forgot password?" 링크 (Phase 3)
-- 소셜 로그인 (Google/Apple) (Phase 3)
-
-### 2.3. 홈페이지 개선
-**로그인 후**:
-- 최근 매칭된 사람 3명 미리보기
-- "New Match!" 배지
-- 읽지 않은 메시지 카운트
+**All checked?** 🎉 Migration successful!
 
 ---
 
-## 🚀 Phase 3: 고급 기능 (우선순위 낮음)
-
-### 3.1. Workout 약속 기능
-- 채팅에서 "Let's workout!" 버튼
-- 날짜/시간/장소 선택
-- 캘린더 동기화
-- 리마인더 알림
-
-### 3.2. 프로필 수정
-- `/settings` 페이지
-- 프로필 사진 업로드
-- 바이오 수정
-- 선호도 업데이트
-
-### 3.3. 알림 시스템
-- 새로운 매칭 알림
-- 메시지 도착 알림
-- Workout 리마인더
-- Push Notifications (PWA)
-
-### 3.4. 프리미엄 기능
-- 무제한 스와이프 (무료: 10/일)
-- "Who liked you" 보기
-- 더 정교한 필터
-- 프로필 부스트
-
-### 3.5. 리뷰 시스템
-- Workout 후 상대방 평가
-- 신뢰도 점수
-- 노쇼 방지
-
----
-
-## 📱 Phase 4: 네비게이션 바
-
-**고정 하단 네비게이션**:
-```
-┌─────────────────────────────────────┐
-│                                     │
-│         [Content Area]              │
-│                                     │
-└─────────────────────────────────────┘
-┌─────────────────────────────────────┐
-│  🏠      ❤️      💬      👤         │
-│  Home  Discover Matches Profile     │
-└─────────────────────────────────────┘
-```
-
-**아이콘**:
-- 🏠 Home: 대시보드
-- ❤️ Discover: 스와이프
-- 💬 Matches: 매칭 리스트 (배지: 읽지 않은 메시지)
-- 👤 Profile: 내 프로필
-
----
-
-## 🗂️ 데이터베이스 스키마 전체
-
-### 기존 테이블
-```sql
--- profiles (완료)
--- swipes (완료)
--- matches (완료)
-```
-
-### 추가 필요 테이블
-```sql
--- messages (채팅)
-CREATE TABLE messages (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  match_id UUID NOT NULL REFERENCES matches(id),
-  sender_id UUID NOT NULL REFERENCES profiles(user_id),
-  message TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  read_at TIMESTAMPTZ
-);
-
--- workouts (운동 약속) - Phase 3
-CREATE TABLE workouts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  match_id UUID NOT NULL REFERENCES matches(id),
-  scheduled_at TIMESTAMPTZ NOT NULL,
-  location TEXT,
-  status TEXT DEFAULT 'pending', -- pending, confirmed, completed, cancelled
-  created_by UUID NOT NULL REFERENCES profiles(user_id),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- reviews (리뷰) - Phase 3
-CREATE TABLE reviews (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  workout_id UUID NOT NULL REFERENCES workouts(id),
-  reviewer_id UUID NOT NULL REFERENCES profiles(user_id),
-  reviewee_id UUID NOT NULL REFERENCES profiles(user_id),
-  rating INTEGER CHECK (rating BETWEEN 1 AND 5),
-  comment TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(workout_id, reviewer_id)
-);
-```
-
----
-
-## 🎯 우선순위 요약
-
-**이번 주 (Phase 1)**:
-1. ✅ Matches 리스트 페이지
-2. ✅ Chat 1:1 채팅
-3. ✅ 매칭 성공 모달
-4. ✅ 하단 네비게이션 바
-
-**다음 주 (Phase 2)**:
-1. 온보딩 분리 (Step 0)
-2. 읽지 않은 메시지 배지
-3. 프로필 사진 업로드
-
-**나중에 (Phase 3)**:
-1. Workout 약속
-2. 알림 시스템
-3. 프리미엄 기능
-
----
-
-**작성일**: 2025-01-10
-**작성자**: Claude + 박재현
+**Last Updated**: 2025-11-26
+**Status**: Ready to Apply ✅
+**Difficulty**: Easy
+**Time**: 5 minutes
