@@ -2,14 +2,13 @@
 
 import { useState } from 'react';
 import html2canvas from 'html2canvas';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 export default function BugReportButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const supabase = createClient();
 
   const captureScreenshot = async (): Promise<string | null> => {
     try {
