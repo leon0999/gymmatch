@@ -16,12 +16,26 @@ export default function BugReportButton() {
       const modal = document.getElementById('bug-report-modal');
       if (modal) modal.style.display = 'none';
 
-      // Capture screenshot
+      // Capture screenshot with improved options
       const canvas = await html2canvas(document.body, {
         useCORS: true,
         allowTaint: true,
         logging: false,
         scale: 0.5, // Reduce size for faster upload
+        backgroundColor: '#ffffff', // Fallback background
+        ignoreElements: (element) => {
+          // Skip elements that might have unsupported CSS
+          const style = window.getComputedStyle(element);
+          const color = style.color || '';
+          const bgColor = style.backgroundColor || '';
+
+          // Skip if using oklab, oklch, or other modern color functions
+          if (color.includes('oklab') || color.includes('oklch') ||
+              bgColor.includes('oklab') || bgColor.includes('oklch')) {
+            return true;
+          }
+          return false;
+        },
       });
 
       // Show modal again
@@ -41,6 +55,7 @@ export default function BugReportButton() {
       });
     } catch (error) {
       console.error('Screenshot capture failed:', error);
+      // Return null but don't throw - allow bug report to continue
       return null;
     }
   };
