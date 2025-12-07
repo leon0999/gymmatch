@@ -53,7 +53,16 @@ export default function MatchesPage() {
           loadMatches();
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Realtime connected for matches');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Realtime channel error:', err);
+          console.log('💡 Supabase Dashboard → Database → Replication → messages 테이블 활성화 필요');
+        } else {
+          console.log('Realtime status:', status);
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);

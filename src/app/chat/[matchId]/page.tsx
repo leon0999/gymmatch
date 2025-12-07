@@ -133,9 +133,20 @@ export default function ChatPage() {
           );
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Realtime connected for match:', matchId);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Realtime channel error:', err);
+          console.log('💡 Supabase Dashboard → Database → Replication → messages 테이블 활성화 필요');
+        } else if (status === 'TIMED_OUT') {
+          console.error('❌ Realtime connection timed out');
+        } else {
+          console.log('Realtime status:', status);
+        }
+      });
 
-    console.log('Subscribed to realtime messages for match:', matchId);
+    console.log('Subscribing to realtime messages for match:', matchId);
 
     return () => {
       console.log('Unsubscribing from realtime messages');
